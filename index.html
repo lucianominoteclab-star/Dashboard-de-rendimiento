@@ -490,10 +490,70 @@
       });
     }
 
-function renderIndividualData() {
+// ========================================================
+    // ACCIÓN DEL BOTÓN DE RECARGA MANUAL
+    // ========================================================
+    function recargarDatosManual() {
+      const btn = document.getElementById('btn-refresh');
+      if (btn) btn.innerHTML = '<i class="ti ti-loader quarter-spin"></i> Cargando...';
+      
+      document.getElementById('sync-status').className = "badge b-mid";
+      document.getElementById('sync-status').innerHTML = '<i class="ti ti-refresh-dot"></i> Actualizando...';
+      
+      cargarDatosDesdeSheet();
+      
+      setTimeout(() => {
+        if (btn) btn.innerHTML = '<i class="ti ti-refresh"></i> Recargar Datos';
+      }, 1200);
+    }
+
+    // ========================================================
+    // FUNCIÓN DE CONEXIÓN Y CARGA BASE
+    // ========================================================
+    function cargarDatosDesdeSheet() {
+      fetch(SCRIPT_READ_URL)
+        .then(res => res.json())
+        .then(res => {
+          if(res.status === "success") {
+            rawData = res.data;
+            document.getElementById('sync-status').className = "badge b-ok";
+            document.getElementById('sync-status').innerHTML = '<i class="ti ti-circle-check"></i> Sincronizado';
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            
+            const selector = document.getElementById('selector-asesor');
+            const asesorPreseleccionado = selector.value;
+            
+            selector.innerHTML = '<option value="">— Seleccionar Asesor —</option>';
+            
+            procesarDashboard();
+
+            if(asesorPreseleccionado) {
+              selector.value = asesorPreseleccionado;
+              renderIndividualData();
+            } else {
+              if (chartEvolucionRef) {
+                chartEvolucionRef.destroy();
+                chartEvolucionRef = null;
+              }
+            }
+          } else {
+            throw new Error(res.message);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('sync-status').className = "badge b-no";
+          document.getElementById('sync-status').innerHTML = '<i class="ti ti-cloud-off"></i> Error de conexión';
+        });
+    }
+
+    // ========================================================
+    // RENDERIZADO DE LA EVOLUCIÓN INDIVIDUAL DE ASESORES
+    // ========================================================
+    function renderIndividualData() {
       const name = document.getElementById('selector-asesor').value;
       
-      // SI NO HAY ASESOR SELECCIONADO, LIMPIAMOS CAMPOS Y SALIMOS
       if(!name) {
         document.getElementById('ind-promedio').textContent = "—";
         document.getElementById('ind-mix').textContent = "Llamadas: 0 | WhatsApp: 0";
@@ -507,23 +567,22 @@ function renderIndividualData() {
         return;
       }
 
-      // Declaración y filtrado inicial de datos por asesor seleccionado
+      // Filtrado limpio y único de datos por asesor
       const filtrado = rawData.filter(r => r.Asesor === name).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
       
-      // Control de seguridad por si el asesor no tiene auditorías cargadas
       if(filtrado.length === 0) return;
 
-      // Promedio individual
+      // Cálculo de promedios individuales
       let sum = filtrado.reduce((acc, r) => acc + parseFloat(r["Nota Final"] || 0), 0);
       let prom = Math.round(sum / filtrado.length);
       document.getElementById('ind-promedio').textContent = prom + "%";
 
-      // Mix de canales operativos
+      // Distribución del Mix Operativo
       let calls = filtrado.filter(r => r["Canal / Tipo de Gestión"] !== "WhatsApp").length;
       let was = filtrado.filter(r => r["Canal / Tipo de Gestión"] === "WhatsApp").length;
       document.getElementById('ind-mix').textContent = `Llamadas: ${calls} | WhatsApp: ${was}`;
 
-      // Listas de texto cualitativo (Últimas 5 auditorías)
+      // Historial Cualitativo (Últimas 5 auditorías)
       const ultimas = filtrado.slice(-5).reverse();
       
       document.getElementById('lista-fortalezas').innerHTML = ultimas.map(r => r["Fortalezas Identificadas"] && r["Fortalezas Identificadas"] !== '—' ? `<div class="text-list-item"><strong>Auditoría ${r.Fecha}</strong>${r["Fortalezas Identificadas"]}</div>` : '').join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin registros.</p>';
@@ -535,7 +594,7 @@ function renderIndividualData() {
         return `<div class="text-list-item"><strong>Acuerdos del ${r.Fecha}</strong>${items.map(i => `• ${i}`).join('<br>')}</div>`;
       }).join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin compromisos anotados.</p>';
 
-      // Gráfico de evolución temporal individual
+      // Generación del gráfico histórico individual
       const labels = filtrado.map(r => r.Fecha);
       const scores = filtrado.map(r => parseFloat(r["Nota Final"] || 0));
 
@@ -543,7 +602,7 @@ function renderIndividualData() {
 
       const ctxEvolucion = document.getElementById('chartEvolucion').getContext('2d');
       chartEvolucionRef = new Chart(ctxEvolucion, {
-        type: 'line', // Modificalo a 'radar' si reestructuraste el bloque visual de competencias individuales
+        type: 'line',
         data: {
           labels: labels,
           datasets: [{
@@ -566,95 +625,6 @@ function renderIndividualData() {
         }
       });
     }
-      // --- VISUAL 3: GRÁFICO DE RADAR INDIVIDUAL (PERFIL DE COMPETENCIAS) ---
-      let indSkillsSum = { "Apertura": 0, "Indagación": 0, "Propuesta": 0, "Objeciones": 0, "Cierre": 0 };
-      let indSkillsCount = { "Apertura": 0, "Indagación": 0, "Propuesta": 0, "Objeciones": 0, "Cierre": 0 };
-      
-      // Conteo específico de Alertas Críticas para el Asesor Seleccionado
-      let individualCriticalCount = 0;
-
-      filtrado.forEach(row => {
-        if(row["Apertura"] !== undefined && row["Apertura"] !== "") { indSkillsSum["Apertura"] += parseFloat(row["Apertura"]); indSkillsCount["Apertura"]++; }
-        if(row["Indagación"] !== undefined && row["Indagación"] !== "") { indSkillsSum["Indagación"] += parseFloat(row["Indagación"]); indSkillsCount["Indagación"]++; }
-        if(row["Propuesta de Valor"] !== undefined && row["Propuesta de Valor"] !== "") { indSkillsSum["Propuesta"] += parseFloat(row["Propuesta de Valor"]); indSkillsCount["Propuesta"]++; }
-        if(row["Manejo de Objeciones"] !== undefined && row["Manejo de Objeciones"] !== "") { indSkillsSum["Objeciones"] += parseFloat(row["Manejo de Objeciones"]); indSkillsCount["Objeciones"]++; }
-        if(row["Cierre"] !== undefined && row["Cierre"] !== "") { indSkillsSum["Cierre"] += parseFloat(row["Cierre"]); indSkillsCount["Cierre"]++; }
-
-        // Sumador de críticos de la ficha individual
-        if(row["Error Crítico: Falta de Respeto"] === "SI" || row["Error Crítico: Venta Fraudulenta"] === "SI") {
-          individualCriticalCount++;
-        }
-      });
-
-      let radarLabels = ["Apertura", "Indagación", "Propuesta Valor", "Objeciones", "Cierre"];
-      let radarValues = [
-        indSkillsCount["Apertura"] > 0 ? Math.round(indSkillsSum["Apertura"]) : 0,
-        indSkillsCount["Indagación"] > 0 ? Math.round(indSkillsSum["Indagación"]) : 0,
-        indSkillsCount["Propuesta"] > 0 ? Math.round(indSkillsSum["Propuesta"]) : 0,
-        indSkillsCount["Objeciones"] > 0 ? Math.round(indSkillsSum["Objeciones"]) : 0,
-        indSkillsCount["Cierre"] > 0 ? Math.round(indSkillsSum["Cierre"]) : 0
-      ];
-
-      if (chartIndividualRadarRef) chartIndividualRadarRef.destroy();
-      const ctxRadar = document.getElementById('chartIndividualRadar').getContext('2d');
-      chartIndividualRadarRef = new Chart(ctxRadar, {
-        type: 'radar',
-        data: {
-          labels: radarLabels,
-          datasets: [{
-            label: 'Desempeño %',
-            data: radarValues,
-            backgroundColor: 'rgba(56, 189, 248, 0.15)',
-            borderColor: '#38bdf8',
-            pointBackgroundColor: '#38bdf8',
-            pointBorderColor: '#fff',
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            r: {
-              angleLines: { color: '#334155' },
-              grid: { color: '#334155' },
-              pointLabels: { color: '#94a3b8', font: { size: 10, weight: '600' } },
-              ticks: { display: false },
-              min: 0,
-              max: 100
-            }
-          }
-        }
-      });
-
-      // --- VISUAL 4: RENDERIZADO DINÁMICO DE COMPONENTE DE ERRORES CRÍTICOS ---
-      const alertContainer = document.getElementById('individualCriticalAlert');
-      const alertIcon = document.getElementById('criticalIcon');
-      const alertText = document.getElementById('criticalStatusText');
-      const alertBadge = document.getElementById('criticalCounterBadge');
-
-      alertBadge.textContent = individualCriticalCount;
-
-      if(individualCriticalCount > 0) {
-        // Modo Peligro Activo
-        alertContainer.className = "critical-alert-box danger-active";
-        alertIcon.className = "ti ti-alert-octagon";
-        alertIcon.style.color = "var(--color-danger)";
-        alertText.textContent = "Alerta: Faltas Críticas detectadas";
-        alertBadge.className = "critical-badge-num pulse";
-        alertBadge.style.backgroundColor = "var(--color-danger)";
-        alertBadge.style.color = "#fff";
-      } else {
-        // Modo Limpio / Seguro
-        alertContainer.className = "critical-alert-box success-active";
-        alertIcon.className = "ti ti-circle-check";
-        alertIcon.style.color = "var(--color-success)";
-        alertText.textContent = "Sin conductas de riesgo";
-        alertBadge.className = "critical-badge-num";
-        alertBadge.style.backgroundColor = "rgba(16, 185, 129, 0.15)";
-        alertBadge.style.color = "var(--color-success)";
-      }
   </script>
 </body>
 </html>

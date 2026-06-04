@@ -487,7 +487,7 @@
       });
     }
 
-  function renderIndividualData() {
+ function renderIndividualData() {
       const name = document.getElementById('selector-asesor').value;
       
       // SI NO HAY ASESOR SELECCIONADO, LIMPIAMOS TODO Y SALIMOS
@@ -504,12 +504,7 @@
         return;
       }
 
-      // ... (Acá abajo continúa todo el resto de tu código normal de filtrado y gráficos)
-      const filtrado = rawData.filter(r => r.Asesor === name).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
-
-      // Mostrar caja de críticos una vez seleccionado el asesor
-      document.getElementById('individualCriticalAlert').style.display = 'flex';
-
+      // DEclaración ÚNICA de la variable filtrado (Corregido el error de duplicación)
       const filtrado = rawData.filter(r => r.Asesor === name).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
       
       // Promedio individual
@@ -534,7 +529,7 @@
         return `<div class="text-list-item"><strong>Acuerdos del ${r.Fecha}</strong>${items.map(i => `• ${i}`).join('<br>')}</div>`;
       }).join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin compromisos anotados.</p>';
 
-      // Gráfico de evolución temporal (Línea)
+      // Gráfico de evolución temporal (Línea o Radar)
       const labels = filtrado.map(r => r.Fecha);
       const scores = filtrado.map(r => parseFloat(r["Nota Final"] || 0));
 
@@ -542,7 +537,7 @@
 
       const ctxEvolucion = document.getElementById('chartEvolucion').getContext('2d');
       chartEvolucionRef = new Chart(ctxEvolucion, {
-        type: 'line',
+        type: 'line', // Recordá que podés cambiarlo a 'radar' si querés ver la telaraña de competencias
         data: {
           labels: labels,
           datasets: [{
@@ -564,7 +559,7 @@
           plugins: { legend: { display: false } }
         }
       });
-
+    }
       // --- VISUAL 3: GRÁFICO DE RADAR INDIVIDUAL (PERFIL DE COMPETENCIAS) ---
       let indSkillsSum = { "Apertura": 0, "Indagación": 0, "Propuesta": 0, "Objeciones": 0, "Cierre": 0 };
       let indSkillsCount = { "Apertura": 0, "Indagación": 0, "Propuesta": 0, "Objeciones": 0, "Cierre": 0 };

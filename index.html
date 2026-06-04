@@ -257,7 +257,7 @@
     let chartCanalesRef = null;
     let chartEvolucionRef = null;
     let chartGroupSkillsRef = null;
-    let chartIndividualRadarRef = null;
+    let chartIndividualRadarRef = null;//
 
   // Función que se ejecuta automáticamente al abrir la página
     window.addEventListener('DOMContentLoaded', () => {
@@ -439,7 +439,9 @@
       // --- VISUAL 1: RENDIMIENTO MAPA DE CALOR (BARRAS HORIZONTALES GRUPAL) ---
       let labelsSkills = Object.keys(skillsSum);
       let valuesSkills = labelsSkills.map(k => skillsCount[k] > 0 ? Math.round((skillsSum[k] / skillsCount[k])) : 0);
-
+// Evitamos que el canvas se duplique al recargar datos
+      if (chartSkillsRef) chartSkillsRef.destroy();
+      // Acá abajo seguía tu lógica normal de inicialización (ejemplo):
       const ctxGroupSkills = document.getElementById('chartGroupSkills').getContext('2d');
       chartGroupSkillsRef = new Chart(ctxGroupSkills, {
         type: 'bar',
@@ -487,10 +489,10 @@
       });
     }
 
- function renderIndividualData() {
+function renderIndividualData() {
       const name = document.getElementById('selector-asesor').value;
       
-      // SI NO HAY ASESOR SELECCIONADO, LIMPIAMOS TODO Y SALIMOS
+      // SI NO HAY ASESOR SELECCIONADO, LIMPIAMOS CAMPOS Y SALIMOS
       if(!name) {
         document.getElementById('ind-promedio').textContent = "—";
         document.getElementById('ind-mix').textContent = "Llamadas: 0 | WhatsApp: 0";
@@ -504,15 +506,18 @@
         return;
       }
 
-      // DEclaración ÚNICA de la variable filtrado (Corregido el error de duplicación)
+      // Declaración y filtrado inicial de datos por asesor seleccionado
       const filtrado = rawData.filter(r => r.Asesor === name).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
       
+      // Control de seguridad por si el asesor no tiene auditorías cargadas
+      if(filtrado.length === 0) return;
+
       // Promedio individual
       let sum = filtrado.reduce((acc, r) => acc + parseFloat(r["Nota Final"] || 0), 0);
       let prom = Math.round(sum / filtrado.length);
       document.getElementById('ind-promedio').textContent = prom + "%";
 
-      // Mix de canales
+      // Mix de canales operativos
       let calls = filtrado.filter(r => r["Canal / Tipo de Gestión"] !== "WhatsApp").length;
       let was = filtrado.filter(r => r["Canal / Tipo de Gestión"] === "WhatsApp").length;
       document.getElementById('ind-mix').textContent = `Llamadas: ${calls} | WhatsApp: ${was}`;
@@ -529,7 +534,7 @@
         return `<div class="text-list-item"><strong>Acuerdos del ${r.Fecha}</strong>${items.map(i => `• ${i}`).join('<br>')}</div>`;
       }).join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin compromisos anotados.</p>';
 
-      // Gráfico de evolución temporal (Línea o Radar)
+      // Gráfico de evolución temporal individual
       const labels = filtrado.map(r => r.Fecha);
       const scores = filtrado.map(r => parseFloat(r["Nota Final"] || 0));
 
@@ -537,7 +542,7 @@
 
       const ctxEvolucion = document.getElementById('chartEvolucion').getContext('2d');
       chartEvolucionRef = new Chart(ctxEvolucion, {
-        type: 'line', // Recordá que podés cambiarlo a 'radar' si querés ver la telaraña de competencias
+        type: 'line', // Modificalo a 'radar' si reestructuraste el bloque visual de competencias individuales
         data: {
           labels: labels,
           datasets: [{

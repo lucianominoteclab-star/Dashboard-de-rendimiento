@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard de Calidad Operativa</title>
-  <!-- Tabler Icons & Chart.js para gráficos -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -21,76 +20,117 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: var(--bg-app); color: var(--text-main); padding: 2rem; }
-    
-    .header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+
+    /* HEADER */
+    .header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
     .title-area h1 { font-size: 24px; font-weight: 700; color: #fff; }
     .title-area p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
-    
-    .nav-tabs { display: flex; gap: 10px; margin-bottom: 2rem; }
+
+    /* TABS */
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 2rem; flex-wrap: wrap; }
     .tab-btn { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
     .tab-btn.active { background: var(--color-primary); color: #000; border-color: var(--color-primary); }
-    
+    .tab-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* KPI GRID */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
     .kpi-card { background: var(--bg-card); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 12px; position: relative; }
     .kpi-card .kpi-title { font-size: 13px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
     .kpi-card .kpi-val { font-size: 28px; font-weight: 700; margin-top: 8px; color: #fff; }
-    .kpi-card i { position: absolute; right: 1.5rem; top: 1.5rem; font-size: 24px; color: var(--color-primary); }
-    
+    .kpi-card i.kpi-icon { position: absolute; right: 1.5rem; top: 1.5rem; font-size: 24px; color: var(--color-primary); }
+    .kpi-trend { font-size: 12px; margin-top: 6px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+    .trend-up { color: var(--color-success); }
+    .trend-down { color: var(--color-danger); }
+    .trend-neutral { color: var(--text-muted); }
+
+    /* VIEWS */
     .view-section { display: none; }
     .view-section.active { display: block; }
-    
+
+    /* GRIDS */
     .dash-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
     .dash-row-three { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
     .dash-row-equal { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-    
-    @media (max-width: 1024px) { 
-      .dash-row, .dash-row-three, .dash-row-equal { grid-template-columns: 1fr; } 
+    @media (max-width: 1024px) {
+      .dash-row, .dash-row-three, .dash-row-equal { grid-template-columns: 1fr; }
     }
-    
+
+    /* CARDS */
     .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; height: 100%; }
-    .card-title { font-size: 16px; font-weight: 700; margin-bottom: 1.2rem; color: #fff; display: flex; justify-content: space-between; align-items: center; }
-    
-    .selector-box { background: var(--bg-card); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px; width: 250px; font-size: 14px; margin-bottom: 1.5rem; outline: none; }
-    
+    .card-title { font-size: 16px; font-weight: 700; margin-bottom: 1.2rem; color: #fff; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+    /* SELECTOR / FILTROS */
+    .filters-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1.5rem; }
+    .selector-box { background: var(--bg-card); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; outline: none; cursor: pointer; }
+    .selector-box:focus { border-color: var(--color-primary); }
+    #selector-asesor { width: 250px; }
+
+    /* TABLA DE RANKING */
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-    th { color: var(--text-muted); padding: 10px; border-bottom: 2px solid var(--border-color); font-weight: 600; }
+    th { color: var(--text-muted); padding: 10px; border-bottom: 2px solid var(--border-color); font-weight: 600; cursor: pointer; user-select: none; white-space: nowrap; }
+    th:hover { color: var(--text-main); }
+    th .sort-icon { margin-left: 4px; font-size: 10px; opacity: 0.5; }
+    th.sorted .sort-icon { opacity: 1; color: var(--color-primary); }
     td { padding: 12px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
-    
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* BADGES */
     .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-block; }
-    .b-ok { background: rgba(16, 185, 129, 0.15); color: #10b981; }
-    .b-mid { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
-    .b-no { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
-    
-    /* Caja de Alertas Críticas Dinámica */
-    .critical-alert-box { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--border-color); transition: all 0.3s ease; }
-    .critical-alert-box.danger-active { background: rgba(239, 68, 68, 0.08); border-color: var(--color-danger); }
+    .b-ok  { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .b-mid { background: rgba(245, 158, 11, 0.15);  color: #f59e0b; }
+    .b-no  { background: rgba(239, 68, 68, 0.15);   color: #ef4444; }
+
+    /* ALERTA CRÍTICA */
+    .critical-alert-box { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color); transition: all 0.3s ease; }
+    .critical-alert-box.danger-active  { background: rgba(239, 68, 68, 0.08);  border-color: var(--color-danger); }
     .critical-alert-box.success-active { background: rgba(16, 185, 129, 0.05); border-color: var(--color-success); }
     .critical-badge-num { font-size: 20px; font-weight: 900; padding: 2px 12px; border-radius: 8px; }
     .critical-badge-num.pulse { animation: critical-pulse 2s infinite; }
-    @keyframes critical-pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+    @keyframes critical-pulse {
+      0%   { box-shadow: 0 0 0 0   rgba(239, 68, 68, 0.5); }
+      70%  { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0   rgba(239, 68, 68, 0); }
+    }
 
-    /* Barra de Progreso para Termómetros */
+    /* BARRAS DE PROGRESO */
     .progress-wrapper { margin-bottom: 14px; }
     .progress-info { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--text-main); font-weight: 500; }
     .progress-bar-bg { width: 100%; background: #334155; height: 10px; border-radius: 9999px; overflow: hidden; }
     .progress-bar-fill { height: 100%; border-radius: 9999px; transition: width 0.5s ease-in-out; }
 
+    /* FEEDBACK CUALITATIVO */
     .text-list-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; line-height: 1.4; }
     .text-list-item strong { color: var(--color-primary); display: block; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; }
-    
+
+    /* LOADER */
     .loader-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; gap: 1rem; }
     .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ERROR STATE */
+    .error-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; gap: 1rem; text-align: center; }
+    .error-container i { font-size: 48px; color: var(--color-danger); }
+    .error-container h3 { color: var(--text-main); font-size: 18px; }
+    .error-container p { color: var(--text-muted); font-size: 14px; max-width: 400px; }
+    .btn-retry { background: var(--color-primary); color: #000; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .btn-retry:hover { opacity: 0.9; }
+
+    /* SEMÁFORO INDIVIDUAL */
+    .ind-estado-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+
+    /* EMPTY STATE */
+    .empty-state { color: var(--text-muted); font-size: 13px; text-align: center; padding: 2rem; }
   </style>
 </head>
 <body>
 
- <div class="header-dash">
+  <!-- HEADER -->
+  <div class="header-dash">
     <div class="title-area">
       <h1>Tablero de Calidad Operativa</h1>
       <p>Fundación Cenedudes · Resumen unificado de gestión de canales</p>
     </div>
-    <div style="display: flex; align-items: center; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
       <button id="btn-refresh" onclick="recargarDatosManual()" class="tab-btn" style="margin-bottom:0; padding: 6px 12px; font-size: 13px;">
         <i class="ti ti-refresh"></i> Recargar Datos
       </button>
@@ -98,9 +138,10 @@
     </div>
   </div>
 
+  <!-- TABS -->
   <div class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('grupal')"><i class="ti ti-users"></i> Vista Grupal</button>
-    <button class="tab-btn" onclick="switchTab('individual')"><i class="ti ti-user"></i> Evolución Individual</button>
+    <button class="tab-btn active" onclick="switchTab('grupal', event)"><i class="ti ti-users"></i> Vista Grupal</button>
+    <button class="tab-btn" onclick="switchTab('individual', event)"><i class="ti ti-user"></i> Evolución Individual</button>
   </div>
 
   <!-- PANTALLA DE CARGA -->
@@ -109,45 +150,76 @@
     <p style="color: var(--text-muted)">Descargando y procesando auditorías...</p>
   </div>
 
-  <!-- DASHBOARD PRINCIPAL (OCULTO AL INICIO) -->
+  <!-- PANTALLA DE ERROR (oculta al inicio) -->
+  <div id="error-screen" style="display:none;">
+    <div class="error-container">
+      <i class="ti ti-cloud-off"></i>
+      <h3>No se pudo conectar con Google Sheets</h3>
+      <p id="error-message">Verificá tu conexión o que la URL del script de Apps Script sea correcta.</p>
+      <button class="btn-retry" onclick="recargarDatosManual()">
+        <i class="ti ti-refresh"></i> Reintentar
+      </button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD PRINCIPAL (oculto al inicio) -->
   <div id="main-content" style="display: none;">
-    
-    <!-- METRICAS MACRO GENERALES -->
+
+    <!-- KPIs MACRO -->
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-title">Auditorías Totales</div>
         <div class="kpi-val" id="kpi-total">—</div>
-        <i class="ti ti-file-analytics"></i>
+        <div class="kpi-trend" id="kpi-total-trend"></div>
+        <i class="ti ti-file-analytics kpi-icon"></i>
       </div>
       <div class="kpi-card">
         <div class="kpi-title">Promedio General</div>
         <div class="kpi-val" id="kpi-promedio">—</div>
-        <i class="ti ti-chart-bar"></i>
+        <div class="kpi-trend" id="kpi-promedio-trend"></div>
+        <i class="ti ti-chart-bar kpi-icon"></i>
       </div>
       <div class="kpi-card">
         <div class="kpi-title">Efectividad de Cierre</div>
         <div class="kpi-val" id="kpi-cierres">—</div>
-        <i class="ti ti-trophy"></i>
+        <div class="kpi-trend" id="kpi-cierres-trend"></div>
+        <i class="ti ti-trophy kpi-icon"></i>
       </div>
       <div class="kpi-card">
         <div class="kpi-title">Alertas Críticas</div>
         <div class="kpi-val" id="kpi-alertas" style="color: var(--color-danger)">—</div>
-        <i class="ti ti-alert-triangle" style="color: var(--color-danger)"></i>
+        <div class="kpi-trend" id="kpi-alertas-trend"></div>
+        <i class="ti ti-alert-triangle kpi-icon" style="color: var(--color-danger)"></i>
       </div>
     </div>
 
-    <!-- SECCIÓN VISTA GRUPAL -->
+    <!-- FILTRO DE RANGO DE FECHAS (compartido) -->
+    <div class="filters-row" style="margin-bottom: 1.5rem;">
+      <label style="font-size:13px; color:var(--text-muted); font-weight:600;">Período:</label>
+      <select id="filtro-periodo" class="selector-box" onchange="onPeriodChange()">
+        <option value="all">Todo el tiempo</option>
+        <option value="30">Último mes</option>
+        <option value="90" selected>Últimos 3 meses</option>
+        <option value="180">Últimos 6 meses</option>
+      </select>
+      <span id="filtro-info" style="font-size:12px; color:var(--text-muted);"></span>
+    </div>
+
+    <!-- VISTA GRUPAL -->
     <div id="view-grupal" class="view-section active">
       <div class="dash-row">
         <div class="card">
-          <div class="card-title">Ranking de Calidad por Asesor</div>
+          <div class="card-title">
+            Ranking de Calidad por Asesor
+            <span style="font-size:12px; color:var(--text-muted); font-weight:400;">Clic en columna para ordenar</span>
+          </div>
           <div style="overflow-x: auto;">
             <table id="ranking-table">
               <thead>
                 <tr>
-                  <th>Asesor</th>
-                  <th>Gestiones</th>
-                  <th>Promedio</th>
+                  <th onclick="sortRanking('name')"    data-col="name">    Asesor         <span class="sort-icon">⇅</span></th>
+                  <th onclick="sortRanking('cant')"    data-col="cant">    Gestiones      <span class="sort-icon">⇅</span></th>
+                  <th onclick="sortRanking('promedio')"data-col="promedio">Promedio       <span class="sort-icon">⇅</span></th>
                   <th>Estado</th>
                 </tr>
               </thead>
@@ -163,7 +235,6 @@
         </div>
       </div>
 
-      <!-- NUEVA FILA GRUPAL: MAPA DE CALOR + TERMÓMETRO OPERATIVO -->
       <div class="dash-row-equal">
         <div class="card">
           <div class="card-title"><i class="ti ti-flame" style="color:var(--color-warning)"></i> Mapa de Calor: Habilidades del Equipo</div>
@@ -180,27 +251,25 @@
       </div>
     </div>
 
-    <!-- SECCIÓN VISTA INDIVIDUAL -->
+    <!-- VISTA INDIVIDUAL -->
     <div id="view-individual" class="view-section">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1.5rem;">
         <select id="selector-asesor" class="selector-box" onchange="renderIndividualData()">
           <option value="">— Seleccionar Asesor —</option>
         </select>
 
-        <!-- ALERTA DE ERRORES CRÍTICOS INDIVIDUAL -->
-        <div id="individualCriticalAlert" class="critical-alert-box success-active" style="width: 320px; margin-bottom: 1.5rem; display: none;">
+        <div id="individualCriticalAlert" class="critical-alert-box success-active" style="width: 320px; display: none;">
           <div style="display:flex; align-items:center; gap:10px;">
             <i id="criticalIcon" class="ti ti-circle-check" style="font-size:20px; color:var(--color-success)"></i>
             <div>
-              <div class="kpi-title" style="font-size:11px;">Críticos del Mes</div>
+              <div class="kpi-title" style="font-size:11px;">Críticos del Período</div>
               <div id="criticalStatusText" style="font-size:13px; font-weight:700; color:#fff;">Sin conductas de riesgo</div>
             </div>
           </div>
           <div id="criticalCounterBadge" class="critical-badge-num" style="background:rgba(16,185,129,0.2); color:var(--color-success);">0</div>
         </div>
       </div>
-      
-      <!-- FILA DE TRES ELEMENTOS: HISTÓRICO (OCUPA 2) + RADAR (OCUPA 1) + CARD CON KIPS -->
+
       <div class="dash-row-three" style="grid-template-columns: 1.5fr 1fr 0.6fr;">
         <div class="card">
           <div class="card-title">Evolución de Calidad (Histórico)</div>
@@ -208,7 +277,6 @@
             <canvas id="chartEvolucion"></canvas>
           </div>
         </div>
-        <!-- NUEVO COMPONENTE: RADAR DE COMPETENCIAS -->
         <div class="card">
           <div class="card-title">Radar de Competencias</div>
           <div style="position: relative; height: 230px; display:flex; align-items:center; justify-content:center;">
@@ -218,16 +286,20 @@
         <div class="card" style="display: flex; flex-direction: column; justify-content: center; gap: 1.5rem;">
           <div>
             <div class="kpi-title" style="font-size:11px">Promedio Individual</div>
-            <div class="kpi-val" id="ind-promedio" style="font-size:36px; color:var(--color-primary)">—</div>
+            <div id="ind-promedio" style="font-size:36px; font-weight:700; color:var(--color-primary); margin-top:8px;">—</div>
+            <div id="ind-estado" style="font-size:12px; margin-top:6px;"></div>
           </div>
           <div>
             <div class="kpi-title" style="font-size:11px">Mix Operativo</div>
             <div style="font-size:14px; margin-top:6px" id="ind-mix">Llamadas: 0 | WhatsApp: 0</div>
           </div>
+          <div>
+            <div class="kpi-title" style="font-size:11px">Auditorías en período</div>
+            <div style="font-size:20px; font-weight:700; margin-top:6px" id="ind-cant">—</div>
+          </div>
         </div>
       </div>
 
-      <!-- FEEDBACK CUALITATIVO EXTRAÍDO DEL SHEET -->
       <div class="dash-row" style="grid-template-columns: 1fr 1fr 1fr;">
         <div class="card">
           <div class="card-title" style="color: var(--color-success)"><i class="ti ti-thumb-up"></i> Fortalezas Recurrentes</div>
@@ -247,210 +319,301 @@
   </div>
 
   <script>
-    // ==========================================
-    // CONFIGURACIÓN: PEGA TU URL DE IMPLEMENTACIÓN DE APPS SCRIPT ACÁ
-    // ==========================================
+    // ============================================================
+    // CONFIGURACIÓN CENTRAL
+    // ============================================================
     const SCRIPT_READ_URL = "https://script.google.com/macros/s/AKfycbyLBxpMe3Odp4uw_6Ra4_tDI3eZfFlUnSjZsKEdppI_cV4wJUTgSN48jBg-R2N6CY_cRw/exec";
-    // ==========================================
 
-  // DEFINICIÓN DE VARIABLES GLOBALES (Aseguramos que existan en todo el documento)
-    let rawData = [];
+    // Nombres de columnas del sheet centralizados — cambiá acá si cambian los headers
+    const FIELDS = {
+      asesor:          "Asesor",
+      fecha:           "Fecha",
+      notaFinal:       "Nota Final",
+      canal:           "Canal / Tipo de Gestión",
+      leadArancelado1: "Lead Arancelado",
+      leadArancelado2: "Lead arancelado",
+      errorRespeto:    "Error Crítico: Falta de Respeto",
+      errorFraude:     "Error Crítico: Venta Fraudulenta",
+      fortalezas:      "Fortalezas Identificadas",
+      mejoras:         "Áreas de Mejora Prioritarias",
+      compromiso1:     "Acción / Compromiso 1",
+      compromiso2:     "Acción / Compromiso 2",
+      compromiso3:     "Acción / Compromiso 3",
+    };
+
+    // Habilidades comerciales (mapa de calor / radar)
+    const SKILLS = ["Apertura", "Indagación", "Propuesta de Valor", "Manejo de Objeciones", "Cierre"];
+
+    // Checklist operativo (termómetros)
+    const OPS_FIELDS = ["Registro en CRM", "Ofreció Preinscripción", "Indagó Métodos de Pago", "Cierre Administrativo"];
+
+    // Canales posibles
+    const CANALES = ["New Lead", "Remarketing", "WhatsApp"];
+
+    // ============================================================
+    // ESTADO GLOBAL
+    // ============================================================
+    let rawData         = [];
+    let filteredData    = [];
     let chartCanalesRef = null;
-    let chartEvolucionRef = null;
-    let chartSkillsRef = null;
+    let chartEvolucionRef    = null;
+    let chartSkillsRef  = null;
+    let chartRadarRef   = null;
+    let rankingSortCol  = 'promedio';
+    let rankingSortAsc  = false;
+    let rankingCache    = [];
+    let isLoading       = false;
 
-  // Función que se ejecuta automáticamente al abrir la página
+    // ============================================================
+    // INIT
+    // ============================================================
     window.addEventListener('DOMContentLoaded', () => {
       cargarDatosDesdeSheet();
     });
 
-    // Función base para conectar con la API de Google Apps Script
+    // ============================================================
+    // CARGA DE DATOS
+    // ============================================================
     function cargarDatosDesdeSheet() {
-      fetch(SCRIPT_READ_URL)
-        .then(res => res.json())
-        .then(res => {
-          if(res.status === "success") {
-            rawData = res.data;
-            document.getElementById('sync-status').className = "badge b-ok";
-            document.getElementById('sync-status').innerHTML = '<i class="ti ti-circle-check"></i> Sincronizado';
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            
-            // Guardamos temporalmente el asesor que estaba seleccionado antes de recargar
-            const selector = document.getElementById('selector-asesor');
-            const asesorPreseleccionado = selector.value;
-            
-            // Limpiamos el selector para evitar duplicados
-            selector.innerHTML = '<option value="">— Seleccionar Asesor —</option>';
-            
-            // Volvemos a procesar el tablero grupal y recargar la lista de asesores
-            procesarDashboard();
+      if (isLoading) return;
+      isLoading = true;
 
-            // Si había un asesor seleccionado, lo restauramos y actualizamos su radar
-            if(asesorPreseleccionado) {
-              selector.value = asesorPreseleccionado;
-              renderIndividualData();
-            } else {
-              // Si no había nadie seleccionado, nos aseguramos de limpiar los gráficos individuales antiguos
-              if (chartEvolucionRef) {
-                chartEvolucionRef.destroy();
-                chartEvolucionRef = null;
-              }
-            }
+      const btn = document.getElementById('btn-refresh');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> Cargando...'; }
+
+      setSyncStatus('mid', 'ti-refresh-dot', 'Actualizando...');
+
+      // Ocultar error si estaba visible
+      document.getElementById('error-screen').style.display = 'none';
+
+      fetch(SCRIPT_READ_URL)
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then(res => {
+          if (res.status !== "success") throw new Error(res.message || "Respuesta inválida del servidor");
+
+          rawData = res.data;
+
+          setSyncStatus('ok', 'ti-circle-check', 'Sincronizado');
+          document.getElementById('loader').style.display   = 'none';
+          document.getElementById('main-content').style.display = 'block';
+
+          // Guardar selección actual antes de reprocesar
+          const selector            = document.getElementById('selector-asesor');
+          const asesorPreseleccionado = selector.value;
+          selector.innerHTML        = '<option value="">— Seleccionar Asesor —</option>';
+
+          applyPeriodFilter();
+          procesarDashboard();
+          renderRanking();
+
+          if (asesorPreseleccionado) {
+            selector.value = asesorPreseleccionado;
+            renderIndividualData();
           } else {
-            throw new Error(res.message);
+            destroyChart('chartEvolucionRef');
+            destroyChart('chartRadarRef');
           }
         })
         .catch(err => {
-          console.error(err);
-          document.getElementById('sync-status').className = "badge b-no";
-          document.getElementById('sync-status').innerHTML = '<i class="ti ti-cloud-off"></i> Error de conexión';
-          
-          const btn = document.getElementById('btn-refresh');
-          if(btn) btn.innerHTML = '<i class="ti ti-refresh"></i> Recargar Datos';
+          console.error("Error al cargar datos:", err);
+          setSyncStatus('no', 'ti-cloud-off', 'Error de conexión');
+
+          // Si nunca se cargaron datos, mostrar pantalla de error
+          if (rawData.length === 0) {
+            document.getElementById('loader').style.display      = 'none';
+            document.getElementById('error-screen').style.display = 'block';
+            document.getElementById('error-message').textContent  = err.message || "Verificá tu conexión o la URL del script.";
+          }
+        })
+        .finally(() => {
+          isLoading = false;
+          if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Recargar Datos'; }
         });
     }
 
-    // Acción que se dispara al tocar el botón nuevo
     function recargarDatosManual() {
-      const btn = document.getElementById('btn-refresh');
-      document.getElementById('sync-status').className = "badge b-mid";
-      document.getElementById('sync-status').innerHTML = '<i class="ti ti-refresh-dot"></i> Actualizando...';
-      btn.innerHTML = '<i class="ti ti-loader quarter-spin"></i> Cargando...';
-      
       cargarDatosDesdeSheet();
-      
-      // Restauramos el aspecto del botón después de un breve delay
-      setTimeout(() => {
-        btn.innerHTML = '<i class="ti ti-refresh"></i> Recargar Datos';
-      }, 1200);
     }
 
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-      event.currentTarget.classList.add('active');
-      document.getElementById('view-' + tab).classList.add('active');
+    // ============================================================
+    // FILTRO DE PERÍODO
+    // ============================================================
+    function applyPeriodFilter() {
+      const dias = parseInt(document.getElementById('filtro-periodo').value);
+      if (isNaN(dias)) {
+        filteredData = [...rawData];
+      } else {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - dias);
+        filteredData = rawData.filter(r => {
+          const d = parseDate(r[FIELDS.fecha]);
+          return d && d >= cutoff;
+        });
+      }
+      const info = document.getElementById('filtro-info');
+      info.textContent = filteredData.length < rawData.length
+        ? `Mostrando ${filteredData.length} de ${rawData.length} auditorías`
+        : `Mostrando todas las ${rawData.length} auditorías`;
     }
 
-    function procesarDashboard() {
-      if(rawData.length === 0) return;
-      
-      // KPIs Globales
-      document.getElementById('kpi-total').textContent = rawData.length;
-      
-      let sumNotas = 0;
-      let cierres = 0;
-      let alertas = 0;
-      let contadoresCanal = { "New Lead": 0, "Remarketing": 0, "WhatsApp": 0 };
-      let asesoresSet = new Set();
+    function onPeriodChange() {
+      applyPeriodFilter();
+      procesarDashboard();
+      renderRanking();
+      // Actualizar vista individual si hay alguien seleccionado
+      const sel = document.getElementById('selector-asesor').value;
+      if (sel) renderIndividualData();
+    }
 
-      // Acumuladores del Mapa de Calor (Bloques)
-      let skillsSum = { "Apertura": 0, "Indagación": 0, "Propuesta de Valor": 0, "Manejo de Objeciones": 0, "Cierre": 0 };
-      let skillsCount = { "Apertura": 0, "Indagación": 0, "Propuesta de Valor": 0, "Manejo de Objeciones": 0, "Cierre": 0 };
+    function parseDate(val) {
+      if (!val) return null;
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? null : d;
+    }
 
-      // Acumuladores de Procesos Operativos (Termómetros)
-      let opsSum = { "Registro en CRM": 0, "Ofreció Preinscripción": 0, "Indagó Métodos de Pago": 0, "Cierre Administrativo": 0 };
-      let opsCount = { "Registro en CRM": 0, "Ofreció Preinscripción": 0, "Indagó Métodos de Pago": 0, "Cierre Administrativo": 0 };
+    // ============================================================
+    // HELPERS
+    // ============================================================
+    function setSyncStatus(type, icon, text) {
+      const el = document.getElementById('sync-status');
+      el.className = `badge b-${type}`;
+      el.innerHTML = `<i class="ti ${icon}"></i> ${text}`;
+    }
 
-      rawData.forEach(row => {
-        sumNotas += parseFloat(row["Nota Final"] || 0);
-        if(row["Lead Arancelado"] === "SI" || row["Lead arancelado"] === "SI") cierres++;
-        
-        // Conteo de Alertas Críticas Globales
-        if(row["Error Crítico: Falta de Respeto"] === "SI" || row["Error Crítico: Venta Fraudulenta"] === "SI") alertas++;
-        
-        if(contadoresCanal[row["Canal / Tipo de Gestión"]] !== undefined) contadoresCanal[row["Canal / Tipo de Gestión"]]++;
-        if(row["Asesor"]) asesoresSet.add(row["Asesor"]);
+    function destroyChart(refName) {
+      if (refName === 'chartEvolucionRef' && chartEvolucionRef) { chartEvolucionRef.destroy(); chartEvolucionRef = null; }
+      if (refName === 'chartRadarRef'     && chartRadarRef)     { chartRadarRef.destroy();     chartRadarRef     = null; }
+    }
 
-        // Sumas para habilidades comerciales generales (Cálculo del mapa de calor)
-        if(row["Apertura"] !== undefined && row["Apertura"] !== "") { skillsSum["Apertura"] += parseFloat(row["Apertura"]); skillsCount["Apertura"]++; }
-        if(row["Indagación"] !== undefined && row["Indagación"] !== "") { skillsSum["Indagación"] += parseFloat(row["Indagación"]); skillsCount["Indagación"]++; }
-        if(row["Propuesta de Valor"] !== undefined && row["Propuesta de Valor"] !== "") { skillsSum["Propuesta de Valor"] += parseFloat(row["Propuesta de Valor"]); skillsCount["Propuesta de Valor"]++; }
-        if(row["Manejo de Objeciones"] !== undefined && row["Manejo de Objeciones"] !== "") { skillsSum["Manejo de Objeciones"] += parseFloat(row["Manejo de Objeciones"]); skillsCount["Manejo de Objeciones"]++; }
-        if(row["Cierre"] !== undefined && row["Cierre"] !== "") { skillsSum["Cierre"] += parseFloat(row["Cierre"]); skillsCount["Cierre"]++; }
+    function colorPorPorcentaje(p) {
+      return p >= 70 ? 'var(--color-success)' : p >= 40 ? 'var(--color-warning)' : 'var(--color-danger)';
+    }
 
-        // Sumas para checklist duro operativo
-        if(row["Registro en CRM"] !== undefined && row["Registro en CRM"] !== "") { opsSum["Registro en CRM"] += parseFloat(row["Registro en CRM"]); opsCount["Registro en CRM"]++; }
-        if(row["Ofreció Preinscripción"] !== undefined && row["Ofreció Preinscripción"] !== "") { opsSum["Ofreció Preinscripción"] += parseFloat(row["Ofreció Preinscripción"]); opsCount["Ofreció Preinscripción"]++; }
-        if(row["Indagó Métodos de Pago"] !== undefined && row["Indagó Métodos de Pago"] !== "") { opsSum["Indagó Métodos de Pago"] += parseFloat(row["Indagó Métodos de Pago"]); opsCount["Indagó Métodos de Pago"]++; }
-        if(row["Cierre Administrativo"] !== undefined && row["Cierre Administrativo"] !== "") { opsSum["Cierre Administrativo"] += parseFloat(row["Cierre Administrativo"]); opsCount["Cierre Administrativo"]++; }
+    function badgePorPorcentaje(p) {
+      if (p >= 70) return { cls: 'b-ok',  txt: 'Aprobado'       };
+      if (p >= 40) return { cls: 'b-mid', txt: 'En desarrollo'   };
+      return              { cls: 'b-no',  txt: 'Incompleto'      };
+    }
+
+    function calcTrend(current, previous, higherIsBetter = true) {
+      if (previous === null || previous === undefined) return '';
+      const delta = current - previous;
+      if (Math.abs(delta) < 0.5) return `<span class="kpi-trend trend-neutral"><i class="ti ti-minus"></i> Sin cambios vs período anterior</span>`;
+      const positive = higherIsBetter ? delta > 0 : delta < 0;
+      const cls  = positive ? 'trend-up' : 'trend-down';
+      const icon = delta > 0 ? 'ti-arrow-up' : 'ti-arrow-down';
+      const sign = delta > 0 ? '+' : '';
+      return `<span class="kpi-trend ${cls}"><i class="ti ${icon}"></i> ${sign}${Math.round(delta)}% vs período anterior</span>`;
+    }
+
+    // Calcula KPIs para un subset de datos
+    function calcKPIs(data) {
+      if (data.length === 0) return { promedio: 0, cierres: 0, alertas: 0 };
+      let sumNotas = 0, cierres = 0, alertas = 0;
+      data.forEach(row => {
+        sumNotas += parseFloat(row[FIELDS.notaFinal] || 0);
+        if (row[FIELDS.leadArancelado1] === "SI" || row[FIELDS.leadArancelado2] === "SI") cierres++;
+        if (row[FIELDS.errorRespeto] === "SI" || row[FIELDS.errorFraude] === "SI") alertas++;
       });
+      return {
+        promedio: Math.round(sumNotas / data.length),
+        cierres:  Math.round((cierres / data.length) * 100),
+        alertas
+      };
+    }
 
-      document.getElementById('kpi-promedio').textContent = Math.round(sumNotas / rawData.length) + "%";
-      document.getElementById('kpi-cierres').textContent = Math.round((cierres / rawData.length) * 100) + "%";
-      document.getElementById('kpi-alertas').textContent = alertas;
+    // Calcula período anterior con la misma cantidad de días
+    function getPreviousPeriodData() {
+      const dias = parseInt(document.getElementById('filtro-periodo').value);
+      if (isNaN(dias)) return null;
+      const cutoffActual   = new Date(); cutoffActual.setDate(cutoffActual.getDate() - dias);
+      const cutoffAnterior = new Date(); cutoffAnterior.setDate(cutoffAnterior.getDate() - dias * 2);
+      return rawData.filter(r => {
+        const d = parseDate(r[FIELDS.fecha]);
+        return d && d >= cutoffAnterior && d < cutoffActual;
+      });
+    }
 
-      // Cargar selector de asesores
-      const selector = document.getElementById('selector-asesor');
+    // ============================================================
+    // PROCESAR DASHBOARD (KPIs + gráficos grupales)
+    // ============================================================
+    function procesarDashboard() {
+      if (rawData.length === 0) return;
+
+      const data     = filteredData;
+      const kpis     = calcKPIs(data);
+      const prevData = getPreviousPeriodData();
+      const prevKPIs = prevData ? calcKPIs(prevData) : null;
+
+      // KPIs
+      document.getElementById('kpi-total').textContent    = data.length;
+      document.getElementById('kpi-promedio').textContent = kpis.promedio + "%";
+      document.getElementById('kpi-cierres').textContent  = kpis.cierres  + "%";
+      document.getElementById('kpi-alertas').textContent  = kpis.alertas;
+
+      // Tendencias
+      if (prevKPIs) {
+        document.getElementById('kpi-total-trend').innerHTML    = calcTrend(data.length,    prevData.length,    true);
+        document.getElementById('kpi-promedio-trend').innerHTML = calcTrend(kpis.promedio,  prevKPIs.promedio,  true);
+        document.getElementById('kpi-cierres-trend').innerHTML  = calcTrend(kpis.cierres,   prevKPIs.cierres,   true);
+        document.getElementById('kpi-alertas-trend').innerHTML  = calcTrend(kpis.alertas,   prevKPIs.alertas,   false);
+      }
+
+      // Selector de asesores (única vez por carga)
+      const asesoresSet = new Set(data.map(r => r[FIELDS.asesor]).filter(Boolean));
+      const selector    = document.getElementById('selector-asesor');
+      const current     = selector.value;
+      selector.innerHTML = '<option value="">— Seleccionar Asesor —</option>';
       Array.from(asesoresSet).sort().forEach(a => {
-        let opt = document.createElement('option');
+        const opt = document.createElement('option');
         opt.value = a; opt.textContent = a;
         selector.appendChild(opt);
       });
+      if (current) selector.value = current;
 
-      // Renderizar Tabla de Ranking Grupal
-      let ranking = {};
-      rawData.forEach(row => {
-        if(!ranking[row.Asesor]) ranking[row.Asesor] = { notas: 0, cant: 0 };
-        ranking[row.Asesor].notesSum = (ranking[row.Asesor].notesSum || 0) + parseFloat(row["Nota Final"] || 0);
-        ranking[row.Asesor].cant++;
+      // Gráfico de torta - Canales
+      const contadoresCanal = {};
+      CANALES.forEach(c => contadoresCanal[c] = 0);
+      data.forEach(row => {
+        if (contadoresCanal[row[FIELDS.canal]] !== undefined) contadoresCanal[row[FIELDS.canal]]++;
       });
 
-      let rankingArr = Object.keys(ranking).map(name => {
-        return { name: name, promedio: Math.round(ranking[name].notesSum / ranking[name].cant), cant: ranking[name].cant };
-      }).sort((a,b) => b.promedio - a.promedio);
-
-      const tbody = document.querySelector('#ranking-table tbody');
-      tbody.innerHTML = rankingArr.map(r => {
-        let cls = r.promedio >= 70 ? 'b-ok' : r.promedio >= 40 ? 'b-mid' : 'b-no';
-        let txt = r.promedio >= 70 ? 'Aprobado' : r.promedio >= 40 ? 'En desarrollo' : 'Incompleto';
-        return `<tr>
-          <td><strong>${r.name}</strong></td>
-          <td>${r.cant} gds.</td>
-          <td style="font-weight:700; color:var(--color-primary)">${r.promedio}%</td>
-          <td><span class="badge ${cls}">${txt}</span></td>
-        </tr>`;
-      }).join('');
-
-      // Gráfico de Tortas - Canales
-     // ==========================================
-      // PASO 3 CORRECTO: CANALES CON DESTRUCCIÓN ACTIVA
-      // ==========================================
-      
-      // 1. Validamos si el gráfico ya existía en memoria para destruirlo antes de redibujar
-      if (chartCanalesRef) chartCanalesRef.destroy(); 
-
-      // 2. Ahora sí, creamos el gráfico de torta de canales normalmente
-      const ctxCanales = document.getElementById('chartCanales').getContext('2d');
-      chartCanalesRef = new Chart(ctxCanales, {
+      if (chartCanalesRef) chartCanalesRef.destroy();
+      chartCanalesRef = new Chart(document.getElementById('chartCanales').getContext('2d'), {
         type: 'pie',
         data: {
           labels: Object.keys(contadoresCanal),
-          datasets: [{
-            data: Object.values(contadoresCanal),
-            backgroundColor: ['#38bdf8', '#a78bfa', '#10b981'],
-            borderWidth: 0
-          }]
+          datasets: [{ data: Object.values(contadoresCanal), backgroundColor: ['#38bdf8', '#a78bfa', '#10b981'], borderWidth: 0 }]
         },
         options: { plugins: { legend: { labels: { color: '#fff' } } } }
       });
 
-      // --- VISUAL 1: RENDIMIENTO MAPA DE CALOR (BARRAS HORIZONTALES GRUPAL) ---
-      let labelsSkills = Object.keys(skillsSum);
-      let valuesSkills = labelsSkills.map(k => skillsCount[k] > 0 ? Math.round((skillsSum[k] / skillsCount[k])) : 0);
-// Evitamos que el canvas se duplique al recargar datos
-      if (chartSkillsRef) chartSkillsRef.destroy();
+      // Mapa de calor - Habilidades
+      const skillsAgg = {};
+      SKILLS.forEach(s => { skillsAgg[s] = { sum: 0, count: 0 }; });
+      data.forEach(row => {
+        SKILLS.forEach(s => {
+          if (row[s] !== undefined && row[s] !== "") {
+            skillsAgg[s].sum   += parseFloat(row[s]);
+            skillsAgg[s].count += 1;
+          }
+        });
+      });
 
-      const ctxSkills = document.getElementById('chartGroupSkills').getContext('2d');
-      // ¡MUY IMPORTANTE!: Asegurate de asignarle el valor a la variable global asignando directamente:
-      chartSkillsRef = new Chart(ctxSkills, { 
+      const labelsSkills = SKILLS;
+      const valuesSkills = SKILLS.map(s => skillsAgg[s].count > 0 ? Math.round(skillsAgg[s].sum / skillsAgg[s].count) : 0);
+
+      if (chartSkillsRef) chartSkillsRef.destroy();
+      chartSkillsRef = new Chart(document.getElementById('chartGroupSkills').getContext('2d'), {
         type: 'bar',
         data: {
           labels: labelsSkills,
           datasets: [{
             data: valuesSkills,
-            backgroundColor: valuesSkills.map(v => v >= 75 ? '#10b981' : (v >= 50 ? '#f59e0b' : '#ef4444')),
+            backgroundColor: valuesSkills.map(v => v >= 75 ? '#10b981' : v >= 50 ? '#f59e0b' : '#ef4444'),
             borderRadius: 6,
             borderWidth: 0
           }]
@@ -467,151 +630,198 @@
         }
       });
 
-      // --- VISUAL 2: TERMÓMETROS OPERATIVOS DEL CHECKLIST GRUPAL ---
+      // Termómetros operativos
+      const opsAgg = {};
+      OPS_FIELDS.forEach(k => { opsAgg[k] = { sum: 0, count: 0 }; });
+      data.forEach(row => {
+        OPS_FIELDS.forEach(k => {
+          if (row[k] !== undefined && row[k] !== "") {
+            opsAgg[k].sum   += parseFloat(row[k]);
+            opsAgg[k].count += 1;
+          }
+        });
+      });
+
       const checklistContainer = document.getElementById('checklistGroupContainer');
       checklistContainer.innerHTML = '';
-      
-      Object.keys(opsSum).forEach(key => {
-        let percentage = opsCount[key] > 0 ? Math.round((opsSum[key] / opsCount[key])) : 0;
-        let colorClass = percentage >= 80 ? 'var(--color-success)' : (percentage >= 60 ? 'var(--color-warning)' : 'var(--color-danger)');
-        
-        let termometroHtml = `
+      OPS_FIELDS.forEach(key => {
+        const pct   = opsAgg[key].count > 0 ? Math.round(opsAgg[key].sum / opsAgg[key].count) : 0;
+        const color = colorPorPorcentaje(pct);
+        checklistContainer.insertAdjacentHTML('beforeend', `
           <div class="progress-wrapper">
             <div class="progress-info">
               <span>${key}</span>
-              <span style="color: ${colorClass}">${percentage}%</span>
+              <span style="color:${color}">${pct}%</span>
             </div>
             <div class="progress-bar-bg">
-              <div class="progress-bar-fill" style="width: ${percentage}%; background-color: ${colorClass}"></div>
+              <div class="progress-bar-fill" style="width:${pct}%; background-color:${color}"></div>
             </div>
           </div>
-        `;
-        checklistContainer.insertAdjacentHTML('beforeend', termometroHtml);
+        `);
       });
     }
 
-// ========================================================
-    // ACCIÓN DEL BOTÓN DE RECARGA MANUAL
-    // ========================================================
-    function recargarDatosManual() {
-      const btn = document.getElementById('btn-refresh');
-      if (btn) btn.innerHTML = '<i class="ti ti-loader quarter-spin"></i> Cargando...';
-      
-      document.getElementById('sync-status').className = "badge b-mid";
-      document.getElementById('sync-status').innerHTML = '<i class="ti ti-refresh-dot"></i> Actualizando...';
-      
-      cargarDatosDesdeSheet();
-      
-      setTimeout(() => {
-        if (btn) btn.innerHTML = '<i class="ti ti-refresh"></i> Recargar Datos';
-      }, 1200);
+    // ============================================================
+    // RANKING CON ORDENAMIENTO
+    // ============================================================
+    function buildRankingCache() {
+      const map = {};
+      filteredData.forEach(row => {
+        const name = row[FIELDS.asesor];
+        if (!name) return;
+        if (!map[name]) map[name] = { name, notesSum: 0, cant: 0 };
+        map[name].notesSum += parseFloat(row[FIELDS.notaFinal] || 0);
+        map[name].cant++;
+      });
+      rankingCache = Object.values(map).map(r => ({ ...r, promedio: Math.round(r.notesSum / r.cant) }));
     }
 
-    // ========================================================
-    // FUNCIÓN DE CONEXIÓN Y CARGA BASE
-    // ========================================================
-    function cargarDatosDesdeSheet() {
-      fetch(SCRIPT_READ_URL)
-        .then(res => res.json())
-        .then(res => {
-          if(res.status === "success") {
-            rawData = res.data;
-            document.getElementById('sync-status').className = "badge b-ok";
-            document.getElementById('sync-status').innerHTML = '<i class="ti ti-circle-check"></i> Sincronizado';
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            
-            const selector = document.getElementById('selector-asesor');
-            const asesorPreseleccionado = selector.value;
-            
-            selector.innerHTML = '<option value="">— Seleccionar Asesor —</option>';
-            
-            procesarDashboard();
-
-            if(asesorPreseleccionado) {
-              selector.value = asesorPreseleccionado;
-              renderIndividualData();
-            } else {
-              if (chartEvolucionRef) {
-                chartEvolucionRef.destroy();
-                chartEvolucionRef = null;
-              }
-            }
-          } else {
-            throw new Error(res.message);
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          document.getElementById('sync-status').className = "badge b-no";
-          document.getElementById('sync-status').innerHTML = '<i class="ti ti-cloud-off"></i> Error de conexión';
-        });
+    function renderRanking() {
+      buildRankingCache();
+      sortAndDrawRanking();
     }
 
-    // ========================================================
-    // RENDERIZADO DE LA EVOLUCIÓN INDIVIDUAL DE ASESORES
-    // ========================================================
+    function sortRanking(col) {
+      if (rankingSortCol === col) { rankingSortAsc = !rankingSortAsc; }
+      else { rankingSortCol = col; rankingSortAsc = col === 'name'; }
+      sortAndDrawRanking();
+    }
+
+    function sortAndDrawRanking() {
+      const col = rankingSortCol;
+      const asc = rankingSortAsc;
+      const sorted = [...rankingCache].sort((a, b) => {
+        const va = col === 'name' ? a.name.toLowerCase() : a[col];
+        const vb = col === 'name' ? b.name.toLowerCase() : b[col];
+        return asc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+      });
+
+      // Actualizar icono de columna activa
+      document.querySelectorAll('#ranking-table th').forEach(th => {
+        th.classList.toggle('sorted', th.dataset.col === col);
+        if (th.dataset.col === col) {
+          th.querySelector('.sort-icon').textContent = asc ? '↑' : '↓';
+        } else if (th.querySelector('.sort-icon')) {
+          th.querySelector('.sort-icon').textContent = '⇅';
+        }
+      });
+
+      const tbody = document.querySelector('#ranking-table tbody');
+      tbody.innerHTML = sorted.map(r => {
+        const { cls, txt } = badgePorPorcentaje(r.promedio);
+        return `<tr>
+          <td><strong>${r.name}</strong></td>
+          <td>${r.cant} gds.</td>
+          <td style="font-weight:700; color:var(--color-primary)">${r.promedio}%</td>
+          <td><span class="badge ${cls}">${txt}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ============================================================
+    // VISTA INDIVIDUAL
+    // ============================================================
     function renderIndividualData() {
       const name = document.getElementById('selector-asesor').value;
-      
-      if(!name) {
-        document.getElementById('ind-promedio').textContent = "—";
-        document.getElementById('ind-mix').textContent = "Llamadas: 0 | WhatsApp: 0";
-        document.getElementById('lista-fortalezas').innerHTML = '';
-        document.getElementById('lista-mejoras').innerHTML = '';
-        document.getElementById('lista-compromisos').innerHTML = '';
-        if (chartEvolucionRef) {
-          chartEvolucionRef.destroy();
-          chartEvolucionRef = null;
-        }
+
+      if (!name) {
+        resetIndividualView();
         return;
       }
 
-      // Filtrado limpio y único de datos por asesor
-      const filtrado = rawData.filter(r => r.Asesor === name).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
-      
-      if(filtrado.length === 0) return;
+      const filtrado = filteredData
+        .filter(r => r[FIELDS.asesor] === name)
+        .sort((a, b) => new Date(a[FIELDS.fecha]) - new Date(b[FIELDS.fecha]));
 
-      // Cálculo de promedios individuales
-      let sum = filtrado.reduce((acc, r) => acc + parseFloat(r["Nota Final"] || 0), 0);
-      let prom = Math.round(sum / filtrado.length);
+      if (filtrado.length === 0) {
+        resetIndividualView();
+        document.getElementById('ind-promedio').textContent = 'Sin datos';
+        return;
+      }
+
+      // Promedio individual
+      const sum    = filtrado.reduce((acc, r) => acc + parseFloat(r[FIELDS.notaFinal] || 0), 0);
+      const prom   = Math.round(sum / filtrado.length);
+      const color  = colorPorPorcentaje(prom);
+      const { cls, txt } = badgePorPorcentaje(prom);
+
       document.getElementById('ind-promedio').textContent = prom + "%";
+      document.getElementById('ind-promedio').style.color = color;
+      document.getElementById('ind-estado').innerHTML     = `<span class="badge ${cls}">${txt}</span>`;
+      document.getElementById('ind-cant').textContent     = filtrado.length + " auditorías";
 
-      // Distribución del Mix Operativo
-      let calls = filtrado.filter(r => r["Canal / Tipo de Gestión"] !== "WhatsApp").length;
-      let was = filtrado.filter(r => r["Canal / Tipo de Gestión"] === "WhatsApp").length;
+      // Mix operativo
+      const calls = filtrado.filter(r => r[FIELDS.canal] !== "WhatsApp").length;
+      const was   = filtrado.filter(r => r[FIELDS.canal] === "WhatsApp").length;
       document.getElementById('ind-mix').textContent = `Llamadas: ${calls} | WhatsApp: ${was}`;
 
-      // Historial Cualitativo (Últimas 5 auditorías)
-      const ultimas = filtrado.slice(-5).reverse();
-      
-      document.getElementById('lista-fortalezas').innerHTML = ultimas.map(r => r["Fortalezas Identificadas"] && r["Fortalezas Identificadas"] !== '—' ? `<div class="text-list-item"><strong>Auditoría ${r.Fecha}</strong>${r["Fortalezas Identificadas"]}</div>` : '').join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin registros.</p>';
-      document.getElementById('lista-mejoras').innerHTML = ultimas.map(r => r["Áreas de Mejora Prioritarias"] && r["Áreas de Mejora Prioritarias"] !== '—' ? `<div class="text-list-item"><strong>Auditoría ${r.Fecha}</strong>${r["Áreas de Mejora Prioritarias"]}</div>` : '').join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin registros.</p>';
-      
-      document.getElementById('lista-compromisos').innerHTML = ultimas.map(r => {
-        let items = [r["Acción / Compromiso 1"], r["Acción / Compromiso 2"], r["Acción / Compromiso 3"]].filter(c => c && c !== '—');
-        if(items.length === 0) return '';
-        return `<div class="text-list-item"><strong>Acuerdos del ${r.Fecha}</strong>${items.map(i => `• ${i}`).join('<br>')}</div>`;
-      }).join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin compromisos anotados.</p>';
+      // Alertas críticas individuales
+      const criticos = filtrado.filter(r => r[FIELDS.errorRespeto] === "SI" || r[FIELDS.errorFraude] === "SI").length;
+      const alertBox  = document.getElementById('individualCriticalAlert');
+      alertBox.style.display = 'flex';
+      if (criticos > 0) {
+        alertBox.className = 'critical-alert-box danger-active';
+        document.getElementById('criticalIcon').className        = 'ti ti-alert-triangle';
+        document.getElementById('criticalIcon').style.color      = 'var(--color-danger)';
+        document.getElementById('criticalStatusText').textContent = 'Conductas de riesgo detectadas';
+        const badge = document.getElementById('criticalCounterBadge');
+        badge.textContent  = criticos;
+        badge.style.background = 'rgba(239,68,68,0.2)';
+        badge.style.color  = 'var(--color-danger)';
+        badge.classList.add('pulse');
+      } else {
+        alertBox.className = 'critical-alert-box success-active';
+        document.getElementById('criticalIcon').className        = 'ti ti-circle-check';
+        document.getElementById('criticalIcon').style.color      = 'var(--color-success)';
+        document.getElementById('criticalStatusText').textContent = 'Sin conductas de riesgo';
+        const badge = document.getElementById('criticalCounterBadge');
+        badge.textContent  = 0;
+        badge.style.background = 'rgba(16,185,129,0.2)';
+        badge.style.color  = 'var(--color-success)';
+        badge.classList.remove('pulse');
+      }
 
-      // Generación del gráfico histórico individual
-      const labels = filtrado.map(r => r.Fecha);
-      const scores = filtrado.map(r => parseFloat(r["Nota Final"] || 0));
+      // Historial cualitativo (últimas 5)
+      const ultimas = filtrado.slice(-5).reverse();
+      const empty   = '<p class="empty-state">Sin registros.</p>';
+
+      document.getElementById('lista-fortalezas').innerHTML = ultimas
+        .map(r => r[FIELDS.fortalezas] && r[FIELDS.fortalezas] !== '—'
+          ? `<div class="text-list-item"><strong>Auditoría ${r[FIELDS.fecha]}</strong>${r[FIELDS.fortalezas]}</div>`
+          : ''
+        ).join('') || empty;
+
+      document.getElementById('lista-mejoras').innerHTML = ultimas
+        .map(r => r[FIELDS.mejoras] && r[FIELDS.mejoras] !== '—'
+          ? `<div class="text-list-item"><strong>Auditoría ${r[FIELDS.fecha]}</strong>${r[FIELDS.mejoras]}</div>`
+          : ''
+        ).join('') || empty;
+
+      document.getElementById('lista-compromisos').innerHTML = ultimas
+        .map(r => {
+          const items = [r[FIELDS.compromiso1], r[FIELDS.compromiso2], r[FIELDS.compromiso3]].filter(c => c && c !== '—');
+          if (!items.length) return '';
+          return `<div class="text-list-item"><strong>Acuerdos del ${r[FIELDS.fecha]}</strong>${items.map(i => `• ${i}`).join('<br>')}</div>`;
+        }).join('') || '<p class="empty-state">Sin compromisos anotados.</p>';
+
+      // Gráfico de evolución
+      const labels = filtrado.map(r => r[FIELDS.fecha]);
+      const scores = filtrado.map(r => parseFloat(r[FIELDS.notaFinal] || 0));
 
       if (chartEvolucionRef) chartEvolucionRef.destroy();
-
-      const ctxEvolucion = document.getElementById('chartEvolucion').getContext('2d');
-      chartEvolucionRef = new Chart(ctxEvolucion, {
+      chartEvolucionRef = new Chart(document.getElementById('chartEvolucion').getContext('2d'), {
         type: 'line',
         data: {
-          labels: labels,
+          labels,
           datasets: [{
             label: 'Calidad %',
             data: scores,
             borderColor: '#38bdf8',
-            backgroundColor: 'rgba(56, 189, 248, 0.1)',
+            backgroundColor: 'rgba(56,189,248,0.1)',
             fill: true,
-            tension: 0.2
+            tension: 0.2,
+            pointBackgroundColor: scores.map(s => colorPorPorcentaje(s)),
+            pointRadius: 5
           }]
         },
         options: {
@@ -621,9 +831,83 @@
             x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
             y: { min: 0, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
           },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => ` ${ctx.parsed.y}%`
+              }
+            }
+          }
+        }
+      });
+
+      // Radar de competencias individual
+      const skillsAgg = {};
+      SKILLS.forEach(s => { skillsAgg[s] = { sum: 0, count: 0 }; });
+      filtrado.forEach(row => {
+        SKILLS.forEach(s => {
+          if (row[s] !== undefined && row[s] !== "") {
+            skillsAgg[s].sum   += parseFloat(row[s]);
+            skillsAgg[s].count += 1;
+          }
+        });
+      });
+      const radarValues = SKILLS.map(s => skillsAgg[s].count > 0 ? Math.round(skillsAgg[s].sum / skillsAgg[s].count) : 0);
+
+      if (chartRadarRef) chartRadarRef.destroy();
+      chartRadarRef = new Chart(document.getElementById('chartIndividualRadar').getContext('2d'), {
+        type: 'radar',
+        data: {
+          labels: SKILLS,
+          datasets: [{
+            label: name,
+            data: radarValues,
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56,189,248,0.15)',
+            pointBackgroundColor: '#38bdf8',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              min: 0, max: 100,
+              grid: { color: '#334155' },
+              angleLines: { color: '#334155' },
+              pointLabels: { color: '#94a3b8', font: { size: 11 } },
+              ticks: { color: '#334155', backdropColor: 'transparent' }
+            }
+          },
           plugins: { legend: { display: false } }
         }
       });
+    }
+
+    function resetIndividualView() {
+      document.getElementById('ind-promedio').textContent = '—';
+      document.getElementById('ind-promedio').style.color = 'var(--color-primary)';
+      document.getElementById('ind-estado').innerHTML     = '';
+      document.getElementById('ind-cant').textContent     = '—';
+      document.getElementById('ind-mix').textContent      = 'Llamadas: 0 | WhatsApp: 0';
+      document.getElementById('lista-fortalezas').innerHTML  = '';
+      document.getElementById('lista-mejoras').innerHTML     = '';
+      document.getElementById('lista-compromisos').innerHTML = '';
+      document.getElementById('individualCriticalAlert').style.display = 'none';
+      if (chartEvolucionRef) { chartEvolucionRef.destroy(); chartEvolucionRef = null; }
+      if (chartRadarRef)     { chartRadarRef.destroy();     chartRadarRef     = null; }
+    }
+
+    // ============================================================
+    // NAVEGACIÓN ENTRE TABS
+    // ============================================================
+    function switchTab(tab, event) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+      if (event && event.currentTarget) event.currentTarget.classList.add('active');
+      document.getElementById('view-' + tab).classList.add('active');
     }
   </script>
 </body>

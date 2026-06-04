@@ -3,824 +3,358 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Evaluación de Calidad — Universidad Siglo 21</title>
-  
-  <!-- FAVICON PERSONALIZADO CON TU IMAGEN DE DRIVE -->
-  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/u/0/d/1GYj6ZeuJDE8QUQjJQEwxnb_e9k8U3ipz">
-  
+  <title>Dashboard de Calidad Operativa</title>
+  <!-- Tabler Icons & Chart.js para gráficos -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg-app: #f4f6f9;
-      --bg-card: #ffffff;
-      --bg-input: #f8fafc;
-      --border-color: #e2e8f0;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-      --text-light: #94a3b8;
-      
-      --color-primary: #0f172a;
-      --color-primary-hover: #1e293b;
-      --color-info: #0284c7;
-      --color-info-bg: #e0f2fe;
-      
+      --bg-app: #0f172a;
+      --bg-card: #1e293b;
+      --border-color: #334155;
+      --color-primary: #38bdf8;
       --color-success: #10b981;
-      --color-success-bg: #ecfdf5;
-      --color-success-text: #065f46;
-      
       --color-warning: #f59e0b;
-      --color-warning-bg: #fffbe6;
-      --color-warning-text: #92400e;
-      
       --color-danger: #ef4444;
-      --color-danger-bg: #fef2f2;
-      --color-danger-text: #991b1b;
-      
-      --radius-sm: 6px;
-      --radius-md: 10px;
-      --radius-lg: 16px;
-      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; }
-    body { background-color: var(--bg-app); color: var(--text-main); padding: 2rem 1rem; }
-    .app { max-width: 760px; margin: 0 auto; background: var(--bg-card); padding: 2.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg-app); color: var(--text-main); padding: 2rem; }
     
-    .step-lbl { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .05em; }
-    .prog-wrap { background: var(--border-color); border-radius: 99px; height: 6px; margin-bottom: 2.5rem; overflow: hidden; }
-    .prog-fill { height: 100%; background: var(--color-info); transition: width .4s ease; }
+    .header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+    .title-area h1 { font-size: 24px; font-weight: 700; color: #fff; }
+    .title-area p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
     
-    .step { display: none; }
-    .step.active { display: block; animation: fadeIn 0.3s ease-in-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 2rem; }
+    .tab-btn { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+    .tab-btn.active { background: var(--color-primary); color: #000; border-color: var(--color-primary); }
     
-    h2 { font-size: 22px; font-weight: 700; color: var(--color-primary); margin-bottom: 1.75rem; border-bottom: 2px solid var(--bg-app); padding-bottom: 10px; }
-    h3 { font-size: 15px; font-weight: 600; color: var(--color-primary); }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .kpi-card { background: var(--bg-card); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 12px; position: relative; }
+    .kpi-card .kpi-title { font-size: 13px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .kpi-card .kpi-val { font-size: 28px; font-weight: 700; margin-top: 8px; color: #fff; }
+    .kpi-card i { position: absolute; right: 1.5rem; top: 1.5rem; font-size: 24px; color: var(--color-primary); }
     
-    .field-label { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
-    input[type=text], input[type=date], textarea, select { width: 100%; font-size: 14px; background: var(--bg-input); color: var(--text-main); border: 1.5px solid var(--border-color); border-radius: var(--radius-md); padding: 10px 14px; transition: all .2s; outline: none; }
-    input[type=text]:focus, input[type=date]:focus, textarea:focus, select:focus { border-color: var(--color-info); background: #fff; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
-    textarea { resize: vertical; min-height: 80px; }
+    .view-section { display: none; }
+    .view-section.active { display: block; }
     
-    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    .fw { margin-bottom: 16px; }
+    .dash-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+    @media (max-width: 900px) { .dash-row { grid-template-columns: 1fr; } }
     
-    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem; transition: box-shadow .2s; }
-    .card:hover { box-shadow: var(--shadow); }
-    .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
-    .sec-title { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-light); margin: 2.5rem 0 1rem; border-left: 3px solid var(--text-light); padding-left: 8px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; height: 100%; }
+    .card-title { font-size: 16px; font-weight: 700; margin-bottom: 1.2rem; color: #fff; display: flex; justify-content: space-between; align-items: center; }
     
-    .badge { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.02em; display: inline-flex; align-items: center; }
-    .b-ok { background: var(--color-success-bg); color: var(--color-success-text); }
-    .b-mid { background: var(--color-warning-bg); color: var(--color-warning-text); }
-    .b-no { background: var(--color-danger-bg); color: var(--color-danger-text); }
-    .b-info { background: var(--color-info-bg); color: var(--color-info); }
-    .b-neu { background: var(--bg-app); color: var(--text-muted); }
-
-    .rubric-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 8px; border-bottom: 1px solid var(--bg-app); cursor: pointer; transition: background .15s; border-radius: var(--radius-sm); }
-    .rubric-item:hover { background: var(--bg-input); }
-    .rubric-item:last-of-type { border-bottom: none; }
+    .selector-box { background: var(--bg-card); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 8px; width: 250px; font-size: 14px; margin-bottom: 1.5rem; outline: none; }
     
-    .rcheck { width: 20px; height: 20px; border-radius: var(--radius-sm); border: 1.5px solid var(--border-color); background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; transition: all .2s; }
-    .rcheck.on { background: var(--color-success); border-color: var(--color-success); }
-    .rcheck svg { display: none; }
-    .rcheck.on svg { display: block; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+    th { color: var(--text-muted); padding: 10px; border-bottom: 2px solid var(--border-color); font-weight: 600; }
+    td { padding: 12px 10px; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
     
-    .rcheck-label { font-size: 14px; font-weight: 500; color: var(--text-main); line-height: 1.4; }
-    .rcheck-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.4; }
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-block; }
+    .b-ok { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .b-mid { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .b-no { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
     
-    .score-pill { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--bg-app); border-radius: var(--radius-md); margin-top: 14px; border: 1px dashed var(--border-color); }
-    .score-pill-lbl { font-size: 13px; font-weight: 500; color: var(--text-muted); flex: 1; }
-    .score-pill-val { font-size: 14px; font-weight: 700; }
+    .text-list-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; line-height: 1.4; }
+    .text-list-item strong { color: var(--color-primary); display: block; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; }
     
-    .mini-dots { display: flex; gap: 5px; align-items: center; }
-    .mdot { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--border-color); transition: all .2s; }
-
-    .yn-wrap { display: flex; gap: 8px; }
-    .yn-btn { flex: 1; border: 1.5px solid var(--border-color); background: #fff; color: var(--text-muted); border-radius: var(--radius-md); padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
-    .yn-btn:hover { background: var(--bg-input); border-color: var(--text-light); }
-    .yn-btn.y { background: var(--color-success-bg); color: var(--color-success-text); border-color: var(--color-success); }
-    .yn-btn.n { background: var(--color-danger-bg); color: var(--color-danger-text); border-color: var(--color-danger); }
-
-    .btn-row { display: flex; gap: 12px; justify-content: flex-end; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); }
-    .btn-p { background: var(--color-primary); color: #fff; border: none; border-radius: var(--radius-md); padding: 12px 24px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; box-shadow: var(--shadow); }
-    .btn-p:hover { background: var(--color-primary-hover); transform: translateY(-1px); }
-    .btn-s { background: transparent; color: var(--text-main); border: 1.5px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 20px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
-    .btn-s:hover { background: var(--bg-app); border-color: var(--text-light); }
-
-    /* SECCIÓN DE DEVOLUCIÓN (PASO 3) */
-    .dev-outer { width: 100%; display: flex; flex-direction: column; align-items: center; }
-    .dev-doc { background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); width: 100%; overflow: hidden; box-shadow: var(--shadow); }
-    .dev-hbar { background: var(--color-primary); color: #fff; padding: 2rem; }
-    .dev-logo-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-    .dev-logo-txt { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-light); }
-    .dev-asesor-row { display: flex; align-items: center; gap: 18px; }
-    .dev-av { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; color: #fff; border: 2px solid rgba(255,255,255,0.2); flex-shrink: 0; }
-    
-    .dev-body { padding: 2rem; background: #fff; }
-    .dsec-title { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; padding-bottom: 6px; border-bottom: 2px solid var(--bg-app); }
-    .dsec { margin-bottom: 2rem; }
-    
-    .mrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
-    .met { background: var(--bg-app); border-radius: var(--radius-md); padding: 1rem; text-align: center; border: 1px solid var(--border-color); }
-    .met-val { font-size: 24px; font-weight: 700; color: var(--color-primary); }
-    .met-lbl { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; }
-    
-    .dattr { padding: 14px 0; border-bottom: 1px solid var(--bg-app); }
-    .dattr:last-child { border-bottom: none; }
-    .dattr-top { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-    .dattr-name { font-size: 14px; font-weight: 600; color: var(--color-primary); flex: 1; }
-    .dattr-pct { font-size: 14px; font-weight: 700; min-width: 45px; text-align: right; }
-    
-    .bar-bg { flex: 1; height: 6px; background: var(--bg-app); border-radius: 99px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 99px; transition: width .3s ease; }
-    
-    .cond-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .cond-tag { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; }
-    .cond-tag.ok { background: var(--color-success-bg); color: var(--color-success-text); border-color: rgba(16, 185, 129, 0.15); }
-    .cond-tag.no { background: var(--color-danger-bg); color: var(--color-danger-text); border-color: rgba(239, 68, 68, 0.1); }
-    
-    .dattr-fb { font-size: 13px; color: var(--text-muted); margin-top: 8px; padding: 8px 12px; background: var(--bg-input); border-left: 3px solid var(--text-light); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-style: italic; line-height: 1.5; }
-    .op-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--bg-app); font-size: 13px; }
-    .op-row:last-child { border-bottom: none; }
-    
-    .plan-li { display: flex; gap: 10px; padding: 8px 0; font-size: 13px; color: var(--text-main); border-bottom: 1px solid var(--bg-app); line-height: 1.4; }
-    .plan-li:last-child { border-bottom: none; }
-    .plan-n { font-weight: 700; color: var(--color-info); min-width: 16px; }
-    .txt-blk { font-size: 13px; color: var(--text-main); line-height: 1.6; white-space: pre-wrap; padding: 10px 14px; background: var(--bg-input); border-radius: var(--radius-md); border: 1px solid var(--border-color); }
-    
-    .err-bar { border-radius: var(--radius-md); padding: 12px 16px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-    
-    .copy-row { display: flex; justify-content: center; gap: 12px; margin-top: 1.5rem; width: 100%; flex-wrap: wrap; }
-    .copy-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--color-info); color: #fff; border: none; border-radius: var(--radius-md); padding: 12px 22px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; box-shadow: var(--shadow); }
-    .copy-btn:hover { background: #0274be; transform: translateY(-1px); }
-    .copy-btn.copied { background: var(--color-success); color: white; }
-    
-    /* Botón exclusivo para Drive */
-    .drive-btn { display: inline-flex; align-items: center; gap: 8px; background: #1e8e3e; color: #fff; border: none; border-radius: var(--radius-md); padding: 12px 22px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; box-shadow: var(--shadow); }
-    .drive-btn:hover { background: #166e2f; transform: translateY(-1px); }
-    .drive-btn.done { background: var(--color-primary); color: white; cursor: default; transform: none; }
+    .loader-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; gap: 1rem; }
+    .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <div class="container">
 
-    <div class="header">
-     <!-- EL LOGO AHORA VIVE ACÁ ADENTRO, ALINEADO AL TEXTO -->
-      <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-        <img src="https://lh3.googleusercontent.com/u/0/d/1s8dR9apPH_ixCRol10wy2EmrI79sXTsk" 
-             alt="Logo Auditoría" 
-             style="max-width: 65px; height: auto; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.08));">
-        <div>
-          <h1 id="step-lbl" style="margin: 0; font-size: 24px;">Paso 1 de 3 — Datos del asesor</h1>
-        </div>
-      </div>
-      
-      <div class="progress-bar"><div class="progress" id="prog" style="width:33.3%"></div></div>
+  <div class="header-dash">
+    <div class="title-area">
+      <h1>Tablero de Calidad Operativa</h1>
+      <p>Fundación Cenedudes · Resumen unificado de gestión de canales</p>
     </div>
+    <div id="sync-status" class="badge b-mid"><i class="ti ti-refresh-dot"></i> Conectando con Google Sheets...</div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('grupal')"><i class="ti ti-users"></i> Vista Grupal</button>
+    <button class="tab-btn" onclick="switchTab('individual')"><i class="ti ti-user"></i> Evolución Individual</button>
+  </div>
+
+  <!-- PANTALLA DE CARGA -->
+  <div id="loader" class="loader-container">
+    <div class="spinner"></div>
+    <p style="color: var(--text-muted)">Descargando y procesando auditorías...</p>
+  </div>
+
+  <!-- DASHBOARD PRINCIPAL (OCULTO AL INICIO) -->
+  <div id="main-content" style="display: none;">
     
-    <!-- ... Resto del formulario ... -->
-
-  <div class="step active" id="step1">
-    <h2>Datos de la evaluación</h2>
-    <div class="g2">
-      <div class="fw">
-  <div class="field-label">Nombre del asesor</div>
-  <div style="position: relative; display: flex; align-items: center;">
-    <!-- Icono de lupa de Tabler Icons dentro del input -->
-    <i class="ti ti-search" style="position: absolute; left: 12px; color: var(--text-light); font-size: 16px; pointer-events: none;"></i>
-    <input type="text" id="asesor" list="lista-asesores" placeholder="Buscar asesor..." style="padding-left: 36px;">
-  </div>
-  
-  <!-- Lista oficial de asesores -->
-  <datalist id="lista-asesores">
-    <option value="ANTONELLA BONAFFINI"></option>
-    <option value="AYLEN BERZA"></option>
-    <option value="CANDELA ESPINOSA"></option>
-    <option value="CECILIA OLMOS"></option>
-    <option value="CIELO LOZANO"></option>
-    <option value="GABRIELA LEAL"></option>
-    <option value="JOAQUIN SITTNER"></option>
-    <option value="LOURDES ORTIZ"></option>
-    <option value="LUANA LOPEZ"></option>
-    <option value="MAGALÍ ABDELHAY"></option>
-    <option value="MAKARENA ANDRADE"></option>
-    <option value="MICAELA GONZALEZ"></option>
-    <option value="MILAGROS SALAS"></option>
-    <option value="MILENA VARGAS"></option>
-    <option value="NATASHA IBAÑEZ"></option>
-  </datalist>
-</div>
- <div class="fw"><div class="field-label">Fecha</div><input type="date" id="fecha"></div>
-  </div> <!-- Cierre del primer .g2 (Asesor y Fecha) -->
-
-  <!-- SEGUNDA FILA: DEPARTAMENTO Y SUPERVISOR JUNTOS -->
-  <div class="g2">
-    <div class="fw">
-      <div class="field-label">Departamento / equipo</div>
-      <div style="position: relative; display: flex; align-items: center;">
-        <i class="ti ti-search" style="position: absolute; left: 12px; color: var(--text-light); font-size: 16px; pointer-events: none;"></i>
-        <input type="text" id="depto" list="lista-departamentos" placeholder="Buscar departamento..." style="padding-left: 36px;">
+    <!-- METRICAS MACRO GENERALES -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Auditorías Totales</div>
+        <div class="kpi-val" id="kpi-total">—</div>
+        <i class="ti ti-file-analytics"></i>
       </div>
-      <datalist id="lista-departamentos">
-        <option value="Siglo 21"></option>
-        <option value="Teclab"></option>
-      </datalist>
-    </div>
-
-    <div class="fw">
-      <div class="field-label">Supervisor evaluador</div>
-      <div style="position: relative; display: flex; align-items: center;">
-        <i class="ti ti-user" style="position: absolute; left: 12px; color: var(--text-light); font-size: 16px; pointer-events: none;"></i>
-        <input type="text" id="super" list="lista-supervisores" placeholder="Buscar supervisor..." style="padding-left: 36px;">
+      <div class="kpi-card">
+        <div class="kpi-title">Promedio General</div>
+        <div class="kpi-val" id="kpi-promedio">—</div>
+        <i class="ti ti-chart-bar"></i>
       </div>
-      <datalist id="lista-supervisores">
-        <option value="CAMILA GAITAN"></option>
-        <option value="LUCIANO MIÑO"></option>
-        <option value="MILAGROS SALAS"></option>
-        <option value="AYLEN BERZA"></option>
-      </datalist>
-    </div>
-  </div> <!-- Cierre del segundo .g2 -->
-
-  <!-- TERCERA FILA: TIPO DE LLAMADA ANCHO COMPLETO -->
-<div class="fw">
-    <div class="field-label">Canal / Tipo de gestión</div>
-    <select id="tipo" onchange="seleccionarPlantilla(this.value)">
-      <option value="">— Seleccionar —</option>
-      <option value="New Lead">Llamada - New Lead</option>
-      <option value="Remarketing">Llamada - Remarketing</option>
-      <option value="WhatsApp">Auditoría - WhatsApp</option>
-    </select>
-  </div>
-
-  <div class="fw" style="margin-top: 15px;">
-    <div class="field-label">Adjuntar audio de la llamada (Opcional)</div>
-    <div style="position: relative; display: flex; align-items: center;">
-      <i class="ti ti-microphone" style="position: absolute; left: 12px; color: var(--text-light); font-size: 16px; pointer-events: none;"></i>
-      <input type="file" id="audio-llamada" accept="audio/*" style="padding-left: 36px; padding-top: 8px;">
-    </div>
-  </div>
-
-  <div class="btn-row">
-    <button class="btn-p" onclick="go(2)">Continuar <i class="ti ti-arrow-right"></i></button>
-  </div>
-</div> <!-- Cierre definitivo del step1 -->
-
-  <div class="step" id="step2">
-    <h2>Evaluación de la llamada</h2>
-    <div class="sec-title">Atributos cuantitativos — cada condición cumplida vale 4%</div>
-    <div id="attrs-container"></div>
-
-    <div class="sec-title">Gestión operativa</div>
-    <div class="card" id="ops-card"></div>
-
-    <div class="sec-title">Errores críticos</div>
-    <div class="card">
-      <div style="margin-bottom:18px">
-        <div style="font-size:14px;font-weight:600;color:var(--color-primary);margin-bottom:8px">¿Hubo falta de respeto o ironía?</div>
-        <div class="yn-wrap"><button class="yn-btn" onclick="err('respeto','SI',this)">Sí — error crítico</button><button class="yn-btn" onclick="err('respeto','NO',this)">No</button></div>
+      <div class="kpi-card">
+        <div class="kpi-title">Efectividad de Cierre</div>
+        <div class="kpi-val" id="kpi-cierres">—</div>
+        <i class="ti ti-trophy"></i>
       </div>
-      <div>
-        <div style="font-size:14px;font-weight:600;color:var(--color-primary);margin-bottom:8px">¿Hubo venta fraudulenta?</div>
-        <div class="yn-wrap"><button class="yn-btn" onclick="err('fraude','SI',this)">Sí — error crítico</button><button class="yn-btn" onclick="err('fraude','NO',this)">No</button></div>
+      <div class="kpi-card">
+        <div class="kpi-title">Alertas Críticas</div>
+        <div class="kpi-val" id="kpi-alertas" style="color: var(--color-danger)">—</div>
+        <i class="ti ti-alert-triangle" style="color: var(--color-danger)"></i>
       </div>
     </div>
-<div id="rubrica-whatsapp" style="display: none; margin-top: 20px;">
-  <div class="card-title" style="margin-bottom: 15px;"><i class="ti ti-brand-whatsapp"></i> Rúbrica de Evaluación — WhatsApp</div>
-  
-  <div class="rubric-grid" id="grid-whatsapp">
-    </div>
-  
-  <div style="margin-top: 20px;">
-    <div class="field-label">Comentarios específicos de la gestión de WhatsApp</div>
-    <textarea id="fb-whatsapp" rows="4" placeholder="Escribe aquí observaciones puntuales del chat analizado..."></textarea>
-  </div>
-</div>
-    <div class="sec-title">Plan de acción</div>
-    <div class="card">
-      <div class="fw"><div class="field-label">Fortalezas identificadas</div><textarea id="fortalezas" placeholder="¿Qué hace bien este asesor?"></textarea></div>
-      <div class="fw"><div class="field-label">Áreas de mejora prioritarias</div><textarea id="mejoras" placeholder="¿En qué debe enfocarse?"></textarea></div>
-      <div class="fw"><div class="field-label">Acciones concretas / compromisos (una por línea)</div><textarea id="acciones" placeholder="Ej: Practicar escucha activa en las próximas 5 llamadas&#10;Seguimiento el dd/mm a las xx:xx"></textarea></div>
-    </div>
 
-    <div class="btn-row">
-      <button class="btn-s" onclick="go(1)"><i class="ti ti-arrow-left"></i> Volver</button>
-      <button class="btn-p" onclick="go(3)">Ver devolución <i class="ti ti-eye"></i></button>
-    </div>
-  </div>
-
-  <div class="step" id="step3">
-    <div class="dev-outer">
-      <div class="dev-doc" id="dev-doc"></div>
-      <div class="copy-row">
-        <button class="drive-btn" id="drive-btn" onclick="sendToDrive()"><i class="ti ti-brand-google-drive"></i> Guardar en Google Drive</button>
-        <button class="copy-btn" id="copy-btn" onclick="copyDev()"><i class="ti ti-copy"></i> Copiar devolución</button>
-        <button class="btn-s" onclick="go(2)" style="font-size:13px;padding:8px 16px"><i class="ti ti-edit"></i> Editar</button>
-        <button class="btn-p" onclick="go(1)" style="font-size:13px;padding:8px 16px"><i class="ti ti-plus"></i> Nueva evaluación</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-// RÚBRICA EXCLUSIVA PARA NEW LEAD
-const ATTRS_NEW_LEAD = [
-  {k:'ind', l:'Indagación y differentials (New Lead)',
-   conds:[
-    {id:'A', l:'Realizó al menos 2 preguntas abiertas', s:'Orientadas a motivación, situación laboral o expectativas del lead'},
-    {id:'B', l:'Demostró escucha activa', s:'Retomó o parafraseó lo que el lead dijo durante la conversación'},
-    {id:'C', l:'Identificó la necesidad principal del lead de forma explícita', s:'Nombró o resumió la necesidad detectada antes de presentar la propuesta'},
-    {id:'D', l:'Presentó differentials específicos alineados a esa necesidad', s:'No entregó una lista genérica; eligió los más relevantes según el lead'},
-    {id:'E', l:'Mantuvo el foco en el lead durante toda la llamada', s:'La conversación giró en torno al lead, no al producto en abstracto'},
-  ]},
-  {k:'reb', l:'Rebate de objeciones',
-   conds:[
-    {id:'A', l:'Detectó la objeción correctamente sin ignorarla ni desviar el tema', s:'Reconoció la objeción de forma explícita antes de responder'},
-    {id:'B', l:'Validó la preocupación del lead con empatía', s:'Mostró comprensión genuina antes de argumentar'},
-    {id:'C', l:'Respondió con un argumento concreto de Siglo 21 alineado a esa objeción', s:'El argumento fue específico, no una respuesta de lista genérica'},
-    {id:'D', l:'Verificó que el lead quedó conforme con la respuesta', s:'Preguntó o chequeó si la objeción quedó resuelta antes de continuar'},
-    {id:'E', l:'Usó la objeción como puente para reforzar la propuesta de valor', s:'Convirtió la objeción en una oportunidad para destacar un diferencial'},
-  ]},
-  {k:'arancel', l:'Información de aranceles',
-   conds:[
-    {id:'A', l:'Ofreció primero el pago semestral con tarjeta como opción principal', s:'Presentó el semestral como la mejor alternativa desde el inicio'},
-    {id:'B', l:'Mencionó los beneficios: descuento y cuotas sin interés', s:'Explicó claramente por qué conviene el semestral'},
-    {id:'C', l:'Preguntó por la tarjeta del lead antes de ofrecer alternativas', s:'Indagó disponibilidad de tarjeta antes de pasar a bimestral o suscripción'},
-    {id:'D', l:'Respetó el orden: semestral → bimestral → suscripción', s:'No saltó pasos ni adelantó opciones inferiores sin manejar objeciones'},
-    {id:'E', l:'No entregó todas las opciones juntas sin manejar objeciones primero', s:'Presentó las opciones de forma escalonada según la respuesta del lead'},
-  ]},
-  {k:'urgencia', l:'Sentido de urgencia',
-   conds:[
-    {id:'A', l:'Mencionó al menos un elemento de urgencia real', s:'Cupos limitados, vencimiento de beca, inicio de clases o beneficio por tiempo limitado'},
-    {id:'B', l:'Lo presentó de forma natural, sin sonar forzado o agresivo', s:'La urgencia fluyó dentro de la conversación sin generar rechazo'},
-    {id:'C', l:'Vinculó la urgencia a un beneficio concreto que el lead pierde si no actúa hoy', s:'Dejó claro qué se pierde específicamente al postergar la decisión'},
-    {id:'D', l:'Propuso una acción inmediata: cerrar, preinscribir o reservar', s:'La urgencia terminó en un llamado a la acción concreto'},
-    {id:'E', l:'Reforzó la urgencia al cierre de la llamada', s:'No solo al inicio; volvió a mencionarla al despedirse o al acordar agenda'},
-  ]},
-  {k:'agenda', l:'Agenda precisa',
-   conds:[
-    {id:'A', l:'Tomó la iniciativa de proponer el próximo contacto', s:'No esperó que el lead lo pidiera; fue proactivo'},
-    {id:'B', l:'Propuso una fecha específica dentro de las 48 horas', s:'No un "te llamo pronto" o "la semana que viene"'},
-    {id:'C', l:'Acordó una hora exacta, no un rango amplio', s:'No "a la tarde" o "mañana" sino una hora concreta'},
-    {id:'D', l:'Generó compromiso del lead con ese horario', s:'El lead confirmó o aceptó explícitamente el horario propuesto'},
-    {id:'E', l:'Mencionó el motivo del recontacto para dar sentido de continuidad', s:'Explicó para qué será la próxima llamada, no solo cuándo'},
-  ]},
-];
-
-// RÚBRICA EXCLUSIVA PARA REMARKETING
-const ATTRS_REMARKETING = [
-  {k:'ind', l:'Indagación del contacto previo (Remarketing)',
-   conds:[
-    {id:'A', l:'Retomó la conversación anterior con contexto claro', s:'Demostró saber en qué estado quedó el contacto anterior (ej: "habías hablado con...")'},
-    {id:'B', l:'Indagó específicamente qué cambió desde la última llamada', s:'Preguntó de forma abierta qué le impidió avanzar o si pudo analizar la info'},
-    {id:'C', l:'Detectó el "freno de mano" real del lead', s:'Identificó si el problema actual es económico, de tiempos, dudas de la carrera, etc.'},
-    {id:'D', l:'Validó la situación actual del lead con empatía activa', s:'No presionó de entrada; se mostró como un asesor dispuesto a ayudar a destrabar'},
-    {id:'E', l:'Mantuvo una postura resolutiva y ágil', s:'Evitó repetir todo el speech inicial e fue directo al grano según el historial'},
-  ]},
-  {k:'reb', l:'Destrabe y Manejo de Objeciones complejas',
-   conds:[
-    {id:'A', l:'Alineó el argumento de destrabe al problema específico detectado', s:'Si el freno era económico, atacó por ahí; si era por dudas, fue al plan de estudios'},
-    {id:'B', l:'Explicó las alternativas de cursado y flexibilidad de Siglo 21', s:'Usó la modalid ED o EDH como solución a la falta de tiempo si aplicaba'},
-    {id:'C', l:'Derribó mitos o miedos sobre la educación online', s:'Dio seguridad sobre el acompañamiento de los tutores y los CAU'},
-    {id:'D', l:'Confirmó que el freno quedó resuelto antes de pasar al precio', s:'Chequeó si conceptualmente el lead se visualiza arrancando'},
-    {id:'E', l:'Elevó el valor de la carrera por encima del costo percibido', s:'Recordó el impacto del título profesional en su salida laboral'},
-  ]},
-  {k:'arancel', l:'Estrategia de Cierre Económico',
-   conds:[
-    {id:'A', l:'Presentó la propuesta económica como una oportunidad de ahorro vigente', s:'Habló de la beca o el arancel actual frente a los aumentos de IPC'},
-    {id:'B', l:'Ofreció el pago semestral remarcando el congelamiento de precio', s:'Explicó que con tarjeta se olvida de los ajustes por el resto del período'},
-    {id:'C', l:'Indagó sobre la disponibilidad de nuevas tarjetas (propias o de terceros)', s:'Buscó alternativas de pago antes de bajar la categoría del plan'},
-    {id:'D', l:'Aplicó de forma escalonada las opciones (Semestral → Bimestral → Suscripción)', s:'No quemó cartuchos; defendió el valor del pack completo'},
-    {id:'E', l:'Transparentó la estructura de pagos sin dejar dudas administrativas', s:'Dejó claro qué incluye la matrícula y los plazos de cuotas'},
-  ]},
-  {k:'urgencia', l:'Re-enfoque de Urgencia Operativa',
-   conds:[
-    {id:'A', l:'Apalancó el cierre en una fecha límite real y cercana', s:'Fin de inscripciones, vencimiento de beneficio de reinscripción, etc.'},
-    {id:'B', l:'Hizo énfasis en el tiempo perdido por postergar el inicio', s:'"Si arrancás ahora, en X meses ya metés el primer cuatrimestre"'},
-    {id:'C', l:'Planteó el beneficio exclusivo de resolver la inscripción HOY', s:'Asegurar el cupo en el CAU elegido o congelar el valor de matrícula'},
-    {id:'D', l:'Llamó a la acción de forma directa y asertiva', s:'Pidió los datos para la preinscripción de forma inmediata'},
-    {id:'E', l:'Sostuvo la firmeza comercial sin caer en una postura pasiva', s:'No se quedó con un "pensalo y avisame"; guió al lead al paso siguiente'},
-  ]},
-  {k:'agenda', l:'Agenda de seguimiento estricto',
-   conds:[
-    {id:'A', l:'Estableció el próximo paso de forma clara y unívoca', s:'Definió qué documentos o gestiones quedan pendientes para el recontacto'},
-    {id:'B', l:'Pactó el llamado dentro de las 24 a 48 horas máximo', s:'Al ser remarketing, el tiempo de enfriamiento debe ser corto'},
-    {id:'C', l:'Fijó hora y minutos exactos para la llamada', s:'Compromiso de agenda cerrada (ej: "mañana a las 10:15")'},
-    {id:'D', l:'Consiguió una confirmación verbal explícita del lead', s:'El lead se comprometió activamente a atender en ese horario'},
-    {id:'E', l:'Explicó el objetivo del próximo llamado (ej: verificar impacto del pago)', s:'Le dio un sentido útil a la llamada, evitando que parezca persecución'},
-  ]},
-];
-
-// NUEVA RÚBRICA EXCLUSIVA PARA WHATSAPP (16 Indicadores de 6.25% c/u)
-const ATTRS_WHATSAPP = [
-  {k:'wa_gestion', l:'Indicadores de Gestión Estratégica — WhatsApp',
-   conds:[
-    {id:'1', l:'1. Presentación', s:'Se presenta correctamente, estableciendo un tono cordial y profesional.'},
-    {id:'2', l:'2. Indagación', s:'Realiza preguntas abiertas para entender el contexto del lead.'},
-    {id:'3', l:'3. Detección de necesidades', s:'Identificó la necesidad principal del lead de forma explícita.'},
-    {id:'4', l:'4. Personalización', s:'Presentó diferenciales específicos de la universidad alineados a la necesidad detectada.'},
-    {id:'5', l:'5. Claridad', s:'Aclara consultas de manera precisa.'},
-    {id:'6', l:'6. Manejo de Objeciones', s:'Detectó la objeción correctamente sin ignorarla ni desviar el tema.'},
-    {id:'7', l:'7. Validación', s:'Verificó que el lead quedó conforme con la respuesta dada.'},
-    {id:'8', l:'8. Escalonamiento', s:'Respetó el orden de oferta (semestral → bimestral).'},
-    {id:'9', l:'9. Dosificación', s:'No entregó toda la información de golpe.'},
-    {id:'10', l:'10. Cierre y Seguimiento', s:'Realiza cierres parciales a lo largo de la conversación.'},
-    {id:'11', l:'11. Sentido de urgencia', s:'Mencionó al menos un elemento de urgencia real (cupos, tiempo, promociones).'},
-    {id:'12', l:'12. Call to Action (CTA)', s:'Propuso una acción inmediata clara (cerrar, preinscribir o reservar).'},
-    {id:'13', l:'13. Próximos pasos', s:'Tomó la iniciativa de proponer el próximo contacto o seguimiento.'},
-    {id:'14', l:'14. Redacción', s:'Mantuvo una ortografía y gramática impecables.'},
-    {id:'15', l:'15. Naturalidad', s:'El tono fue empático y evitó sonar como un "robot" (adaptó las plantillas).'},
-    {id:'16', l:'16. Uso apropiado', s:'Aplicó el uso correcto de notas y etiquetas.'}
-  ]}
-];
-
-// Variables reactivas iniciales
-let ATTRS = [];
-
-const OPS = [
-  {k:'lead',l:'Lead arancelado',d:'¿Se cerró la venta en la gestión?'},
-  {k:'preinscripcion',l:'Ofrece preinscripción',d:'¿Intentó cargar datos para asegurar el cupo?'},
-  {k:'metodos',l:'Pregunta métodos de pago',d:'¿Pregunta por tarjeta antes de ofrecer financiación?'},
-  {k:'convenios',l:'Convenios con empresas',d:'¿Pregunta por empresa del lead y ofrece convenio?'},
-  {k:'ganchos',l:'Ganchos comerciales',d:'¿Mencionó cursos extras (Excel, Power BI, Autoliderazgo)?'},
-  {k:'sistemas',l:'Registro en sistemas',d:'¿Dejó nota, tarea y fin de gestión en Tomi/Hubspot?'},
-  {k:'descuentos',l:'Info descuentos correcta',d:'¿Clarificó beca de bienvenida y variaciones IPC?'},
-];
-
-const checks = {};
-
-function inicializarChecks() {
-  ATTRS.forEach(a => {
-    checks[a.k] = {};
-    a.conds.forEach(c => {
-      checks[a.k][c.id] = false;
-    });
-  });
-}
-const E={respeto:null,fraude:null};
-const OV={};
-
-// MODIFICACIÓN PASO 4: Soporte matemático diferenciado (4% llamadas, 6.25% WhatsApp)
-function getScore(k){
-  const tipoSeleccionado = document.getElementById('tipo').value;
-  const marcados = Object.values(checks[k]).filter(Boolean).length;
-  if(tipoSeleccionado === "WhatsApp") {
-    return Math.round(marcados * 6.25);
-  }
-  return marcados * 4;
-}
-
-function getCount(k){return Object.values(checks[k]).filter(Boolean).length}
-function dotColor(s, totalConds){
-  if(totalConds === 16) {
-    return s===100?'var(--color-success)':s>=60?'var(--color-warning)':'var(--color-danger)';
-  }
-  return s===20?'var(--color-success)':s>=12?'var(--color-warning)':'var(--color-danger)';
-}
-
-function buildAttrs(){
-  const tipoSeleccionado = document.getElementById('tipo').value;
-  const esWA = (tipoSeleccionado === "WhatsApp");
-
-  document.getElementById('attrs-container').innerHTML=ATTRS.map(a=>`
-    <div class="card">
-      <div class="card-head">
-        <h3>${a.l}</h3>
-        <div style="display:flex;align-items:center;gap:12px">
-          <div class="mini-dots" id="dots-${a.k}">${a.conds.map(c=>`<div class="mdot" id="dot-${a.k}-${c.id}"></div>`).join('')}</div>
-          <span class="badge b-neu" id="sc-${a.k}">0%</span>
-        </div>
-      </div>
-      <div style="${esWA ? 'display:grid; grid-template-columns:1fr 1fr; gap:10px;' : ''}">
-        ${a.conds.map(c=>`
-          <div class="rubric-item" onclick="toggle('${a.k}','${c.id}')" style="${esWA ? 'border:1px solid var(--border-color); padding:10px;' : ''}">
-            <div class="rcheck" id="rc-${a.k}-${c.id}"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="2,5.5 4.5,8 9,2.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <div><div class="rcheck-label">${c.l}</div><div class="rcheck-sub">${c.s}</div></div>
-          </div>`).join('')}
-      </div>
-      <div class="score-pill"><span class="score-pill-lbl">Condiciones cumplidas</span><span class="score-pill-val" id="sp-${a.k}" style="color:var(--text-light)">0 de ${a.conds.length} → 0%</span></div>
-      <div class="field-label" style="margin-top:14px">Observaciones específicas</div><textarea id="fb-${a.k}" placeholder="Detalles de lo observado..."></textarea>
-    </div>`).join('');
-}
-
-function buildOps(){
-  document.getElementById('ops-card').innerHTML=OPS.map(o=>`
-    <div class="op-row">
-      <div><div style="font-size:13px;font-weight:600;color:var(--color-primary)">${o.l}</div><div style="font-size:12px;color:var(--text-muted)">${o.d}</div></div>
-      <div class="yn-wrap" style="flex-shrink:0;margin-left:16px">
-        <button class="yn-btn" onclick="opv('${o.k}','SI',this)">Sí</button>
-        <button class="yn-btn" onclick="opv('${o.k}','NO',this)">No</button>
-      </div>
-    </div>`).join('');
-}
-
-buildOps();
-// Captura el cambio de canal para esconder dinámicamente el cargador de audio si es WhatsApp
-document.getElementById('tipo').addEventListener('change', function() {
-  const audioField = document.getElementById('audio-llamada')?.closest('.fw');
-  if(this.value === "WhatsApp") {
-    if(audioField) audioField.style.display = 'none';
-  } else {
-    if(audioField) audioField.style.display = 'block';
-  }
-});
-
-(function(){const d=new Date();document.getElementById('fecha').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
-
-function toggle(k,cid){checks[k][cid]=!checks[k][cid];document.getElementById('rc-'+k+'-'+cid).classList.toggle('on',checks[k][cid]);updateUI(k)}
-
-function updateUI(k){
-  const aRef = ATTRS.find(a=>a.k===k);
-  const totalConds = aRef.conds.length;
-  const s=getScore(k);const n=getCount(k);const color=dotColor(s, totalConds);
-  
-  aRef.conds.forEach(c=>{
-    const dot=document.getElementById('dot-'+k+'-'+c.id);
-    if(dot) {
-      dot.style.background=checks[k][c.id]?color:'var(--bg-app)';
-      dot.style.borderColor=checks[k][c.id]?color:'var(--border-color)';
-    }
-  });
-  
-  const badge=document.getElementById('sc-'+k);badge.textContent=s+'%';
-  const esMax = (totalConds === 16 ? s===100 : s===20);
-  badge.className='badge '+(esMax ? 'b-ok' : s>0 ? 'b-mid' : 'b-neu');
-  
-  const sp=document.getElementById('sp-'+k);sp.textContent=n+' de '+totalConds+' → '+s+'%';
-  sp.style.color=esMax ? 'var(--color-success-text)' : s>0 ? 'var(--color-warning-text)' : 'var(--text-light)';
-}
-
-function err(a,v,btn){E[a]=v;btn.closest('.yn-wrap').querySelectorAll('.yn-btn').forEach(b=>b.className='yn-btn');btn.classList.add(v==='SI'?'y':'n')}
-function opv(k,v,btn){OV[k]=v;btn.closest('.yn-wrap').querySelectorAll('.yn-btn').forEach(b=>b.className='yn-btn');btn.classList.add(v==='SI'?'y':'n')}
-
-function go(n){
-  if (n === 2) {
-    const tipoSeleccionado = document.getElementById('tipo').value;
-    if (!tipoSeleccionado) {
-      alert("Por favor, seleccioná el Canal / Tipo de gestión primero.");
-      return;
-    }
-    
-    // CARGA DE PLANTILLA DINÁMICA INCLUYENDO WHATSAPP
-    if (tipoSeleccionado === "Remarketing") {
-      ATTRS = ATTRS_REMARKETING;
-    } else if (tipoSeleccionado === "WhatsApp") {
-      ATTRS = ATTRS_WHATSAPP;
-    } else {
-      ATTRS = ATTRS_NEW_LEAD;
-    }
-    // Limpiamos el contenedor visual antes de reinicializar los nuevos checks
-    document.getElementById('attrs-container').innerHTML = '';
-    inicializarChecks();
-    buildAttrs();
-  }
-
-  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
-  document.getElementById('step'+n).classList.add('active');
-  const labels=['','Paso 1 de 3 — Datos del asesor','Paso 2 de 3 — Evaluación','Paso 3 de 3 — Devolución al asesor'];
-  document.getElementById('step-lbl').textContent=labels[n];
-  document.getElementById('prog').style.width=(n*33.3)+'%';
-  
-  if(n===1 && textReportCache !== "") {
-    resetForm();
-  } else if(n===3) {
-    buildDev();
-  }
-  window.scrollTo(0,0);
-}
-
-function resetForm() {
-  document.getElementById('asesor').value = '';
-  document.getElementById('depto').value = '';
-  if (document.getElementById('super')) document.getElementById('super').value = ''; 
-  document.getElementById('tipo').value = '';
-  
-  const audioField = document.getElementById('audio-llamada')?.closest('.fw');
-  if (audioField) audioField.style.display = 'block';
-  if (document.getElementById('audio-llamada')) document.getElementById('audio-llamada').value = '';
-
-  const d = new Date();
-  document.getElementById('fecha').value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-
-  ATTRS.forEach(a => {
-    a.conds.forEach(c => {
-      checks[a.k][c.id] = false;
-      const rc = document.getElementById(`rc-${a.k}-${c.id}`);
-      if(rc) rc.classList.remove('on');
-    });
-    updateUI(a.k);
-    const fb = document.getElementById(`fb-${a.k}`);
-    if(fb) fb.value = '';
-  });
-
-  OPS.forEach(o => { delete OV[o.k]; });
-  E.respeto = null;
-  E.fraude = null;
-
-  document.querySelectorAll('.yn-wrap .yn-btn').forEach(b => { b.className = 'yn-btn'; });
-  document.getElementById('fortalezas').value = '';
-  document.getElementById('mejoras').value = '';
-  document.getElementById('acciones').value = '';
-  textReportCache = "";
-}
-
-function initials(n){if(!n)return'?';return n.trim().split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase()}
-function svgRing(pct,color){const r=26,circ=2*Math.PI*r,dash=Math.round((pct/100)*circ);return`<svg width="64" height="64" viewBox="0 0 64 64" style="transform:rotate(-90deg)"><circle cx="32" cy="32" r="${r}" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="5"/><circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-dasharray="${dash} ${circ}" stroke-linecap="round"/></svg>`}
-
-let textReportCache = ""; 
-
-// PASO 4 CONTINUACIÓN: Armado visual de la devolución interactiva y reporte raw de texto
-function buildDev(){
-  const asesor=document.getElementById('asesor').value||'Asesor';
-  const fechaRaw=document.getElementById('fecha').value;
-  const fechaFmt=fechaRaw?new Date(fechaRaw+'T00:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}):'—';
-  const depto=document.getElementById('depto').value||'—';
-  const sup=document.getElementById('super').value||'—';
-  const tipo=document.getElementById('tipo').value||'—';
-
-  const hasCrit=E.respeto==='SI'||E.fraude==='SI';
-  const arancelado=OV['lead']==='SI';
-  
-  let total=0; ATTRS.forEach(a=>{total+=getScore(a.k)});
-  let final=hasCrit?0:arancelado?100:Math.round(total);
-
-  const ringColor=final>=70?'#10b981':final>=40?'#f59e0b':'#ef4444';
-  const estadoTxt=final>=70?'Aprobado':final>=40?'En desarrollo':'Requiere mejora';
-  const estadoCls=final>=70?'b-ok':final>=40?'b-mid':'b-no';
-
-  const dBtn = document.getElementById('drive-btn');
-  dBtn.className = "drive-btn";
-  dBtn.innerHTML = '<i class="ti ti-brand-google-drive"></i> Guardar en Google Drive';
-  dBtn.onclick = sendToDrive;
-
-  let errBars='';
-  if(E.respeto==='SI')errBars+=`<div class="err-bar" style="background:var(--color-danger-bg);border:1px solid var(--color-danger);color:var(--color-danger-text)"><i class="ti ti-alert-triangle"></i> Error crítico detectado: Falta de respeto — Nota penalizada a 0%</div>`;
-  if(E.fraude==='SI')errBars+=`<div class="err-bar" style="background:var(--color-danger-bg);border:1px solid var(--color-danger);color:var(--color-danger-text)"><i class="ti ti-alert-triangle"></i> Error crítico detectado: Venta fraudulenta — Nota penalizada a 0%</div>`;
-  if(arancelado&&!hasCrit)errBars=`<div class="err-bar" style="background:var(--color-success-bg);border:1px solid var(--color-success);color:var(--color-success-text)"><i class="ti ti-trophy"></i> ¡Cierre Efectivo! Gestión arancelada — Calificación: 100%</div>`;
-
-  const attrRows=ATTRS.map(a=>{
-    const s=getScore(a.k);const n=getCount(a.k);
-    const totalConds = a.conds.length;
-    const barColor= (totalConds === 16) ? (s===100?'var(--color-success)':s>=60?'var(--color-warning)':'var(--color-danger)') : (s===20?'var(--color-success)':s>=12?'var(--color-warning)':'var(--color-danger)');
-    const fb=document.getElementById('fb-'+a.k).value;
-    const tags=a.conds.map(c=>`<span class="cond-tag ${checks[a.k][c.id]?'ok':'no'}"><svg width="10" height="10" viewBox="0 0 9 9" fill="none">${checks[a.k][c.id]?'<polyline points="1.5,4.5 3.5,6.5 7.5,2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>':'<line x1="2" y1="2" x2="7" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="2" x2="2" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'}</svg>${c.l}</span>`).join('');
-    
-    return`<div class="dattr">
-      <div class="dattr-top">
-        <span class="dattr-name">${a.l}</span>
-        <div class="bar-bg"><div class="bar-fill" style="width:${(totalConds === 16)? s : s*5}%;background:${barColor}"></div></div>
-        <span class="dattr-pct" style="color:${barColor}">${s}% <span style="font-size:12px;font-weight:500;color:var(--text-light)">(${n}/${totalConds})</span></span>
-      </div>
-      <div class="cond-grid">${tags}</div>
-      ${fb?`<div class="dattr-fb">${fb}</div>`:''}
-    </div>`;
-  }).join('');
-
-  const opsRows=OPS.map(o=>{
-    const v=OV[o.k];
-    return`<div class="op-row"><span style="color:var(--text-main); font-weight:500">${o.l}</span>${v==='SI'?`<span class="badge b-ok">Sí</span>`:v==='NO'?`<span class="badge b-no">No</span>`:`<span class="badge b-neu">—</span>`}</div>`;
-  }).join('');
-
-  const fortalezas=document.getElementById('fortalezas').value;
-  const mejoras=document.getElementById('mejoras').value;
-  const acciones=document.getElementById('acciones').value;
-
-  document.getElementById('dev-doc').innerHTML=`
-    <div class="dev-hbar">
-      <div class="dev-logo-row"><span class="dev-logo-txt">Reporte de Calidad Operativa</span><span class="badge b-info">${tipo}</span></div>
-      <div class="dev-asesor-row">
-        <div class="dev-av">${initials(asesor)}</div>
-        <div style="flex:1">
-          <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:2px">${asesor}</div>
-          <div style="font-size:13px;color:var(--text-light)">${depto}</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px"><i class="ti ti-calendar"></i> ${fechaFmt} · <i class="ti ti-user-check"></i> Auditado por ${sup}</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-          <div style="position:relative;width:64px;height:64px">
-            ${svgRing(final,ringColor)}
-            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><span style="font-size:14px;font-weight:700;color:#fff">${final}%</span></div>
+    <!-- SECCIÓN VISTA GRUPAL -->
+    <div id="view-grupal" class="view-section active">
+      <div class="dash-row">
+        <div class="card">
+          <div class="card-title">Ranking de Calidad por Asesor</div>
+          <div style="overflow-x: auto;">
+            <table id="ranking-table">
+              <thead>
+                <tr>
+                  <th>Asesor</th>
+                  <th>Gestiones</th>
+                  <th>Promedio</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody><!-- Dinámico --></tbody>
+            </table>
           </div>
-          <span class="badge ${estadoCls}" style="border:1px solid rgba(255,255,255,0.1)">${estadoTxt}</span>
+        </div>
+        <div class="card">
+          <div class="card-title">Distribución por Canales</div>
+          <div style="height: 220px; display:flex; align-items:center; justify-content:center;">
+            <canvas id="chartCanales"></canvas>
+          </div>
         </div>
       </div>
     </div>
-    <div class="dev-body">
-      ${errBars?`<div style="margin-bottom:1.5rem">${errBars}</div>`:''}
-      <div class="dsec">
-        <div class="dsec-title">Métricas de Desempeño</div>
-        <div class="mrow">
-          <div class="met"><div class="met-val">${final}%</div><div class="met-lbl">Nota Final</div></div>
-          <div class="met"><div class="met-val">${Math.round(total)}%</div><div class="met-lbl">Puntaje Técnico</div></div>
-          <div class="met"><div class="met-val" style="display:flex;justify-content:center;align-items:center;height:28px;"><span class="badge ${estadoCls}">${estadoTxt}</span></div><div class="met-lbl">Estado General</div></div>
+
+    <!-- SECCIÓN VISTA INDIVIDUAL -->
+    <div id="view-individual" class="view-section">
+      <select id="selector-asesor" class="selector-box" onchange="renderIndividualData()">
+        <option value="">— Seleccionar Asesor —</option>
+      </select>
+      
+      <div class="dash-row">
+        <div class="card">
+          <div class="card-title">Evolución de Calidad (Histórico)</div>
+          <div style="position: relative; height: 250px;">
+            <canvas id="chartEvolucion"></canvas>
+          </div>
+        </div>
+        <div class="card" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div>
+            <div class="kpi-title" style="font-size:11px">Promedio Individual</div>
+            <div class="kpi-val" id="ind-promedio" style="font-size:36px; color:var(--color-primary)">—</div>
+          </div>
+          <div>
+            <div class="kpi-title" style="font-size:11px">Mix Operativo</div>
+            <div style="font-size:14px; margin-top:6px" id="ind-mix">Llamadas: 0 | WhatsApp: 0</div>
+          </div>
         </div>
       </div>
-      <div class="dsec"><div class="dsec-title">Alineación de Criterios (Estructura de Bloques)</div>${attrRows}</div>
-      ${fortalezas?`<div class="dsec"><div class="dsec-title">Fortalezas Identificadas</div><div class="txt-blk">${fortalezas}</div></div>`:''}
-      ${mejoras?`<div class="dsec"><div class="dsec-title">Oportunidades de Mejora</div><div class="txt-blk">${mejoras}</div></div>`:''}
-      ${acciones?`<div class="dsec"><div class="dsec-title">Plan de Acción / Compromisos Próximos</div>${acciones.split('\n').filter(l=>l.trim()).map((l,i)=>`<div class="plan-li"><span class="plan-n">${i+1}.</span><span>${l}</span></div>`).join('')}</div>`:''}
-      <div class="dsec"><div class="dsec-title">Gestión de Procesos y Sistemas</div>${opsRows}</div>
-    </div>`;
 
-  let lines=[];
-  lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  lines.push(`EVALUACIÓN DE CALIDAD — ${tipo === 'WhatsApp' ? 'WHATSAPP' : 'SIGLO 21'}`);
-  lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  lines.push(`Asesor:      ${asesor}`);
-  lines.push(`Fecha:       ${fechaFmt}`);
-  lines.push(`Depto:       ${depto}`);
-  lines.push(`Supervisor:  ${sup}`);
-  lines.push(`Tipo:        ${tipo}`);
-  lines.push(`NOTA FINAL:  ${final}% — ${estadoTxt}`);
-  lines.push(`Puntaje Técnico: ${Math.round(total)}%`);
-  lines.push('');
-  if(E.respeto==='SI')lines.push('⚠ Error crítico: falta de respeto — nota penalizada 0%');
-  if(E.fraude==='SI')lines.push('⚠ Error crítico: venta fraudulenta — nota penalizada 0%');
-  if(arancelado&&!hasCrit)lines.push('★ Cierre Efectivo: Lead arancelado — nota 100%');
-  lines.push('── CRITERIOS EVALUADOS ────────');
-  ATTRS.forEach(a=>{
-    lines.push(`${a.l}: ${getScore(a.k)}%`);
-    a.conds.forEach(c=>lines.push(`  ${checks[a.k][c.id]?'✓':'✗'} ${c.l}`));
-    const fb=document.getElementById('fb-'+a.k).value;
-    if(fb)lines.push(`  → Obs: ${fb}`);
-    lines.push('');
-  });
-  if(fortalezas){lines.push('── FORTALEZAS ─────────────────');lines.push(fortalezas);lines.push('')}
-  if(mejoras){lines.push('── OPORTUNIDADES DE MEJORA ────');lines.push(mejoras);lines.push('')}
-  if(acciones){lines.push('── COMPROMISOS ASUMIDOS ───────');acciones.split('\n').filter(l=>l.trim()).forEach((l,i)=>lines.push(`${i+1}. ${l}`));lines.push('')}
-  lines.push('── GESTIÓN OPERATIVA ──────────');
-  OPS.forEach(o=>lines.push(`${o.l}: ${OV[o.k]||'—'}`));
-  lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  textReportCache = lines.join('\n');
-}
+      <!-- FEEDBACK CUALITATIVO EXTRAÍDO DEL SHEET -->
+      <div class="dash-row" style="grid-template-columns: 1fr 1fr 1fr;">
+        <div class="card">
+          <div class="card-title" style="color: var(--color-success)"><i class="ti ti-thumb-up"></i> Fortalezas Recurrentes</div>
+          <div id="lista-fortalezas" style="max-height: 250px; overflow-y:auto;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="color: var(--color-warning)"><i class="ti ti-trending-up"></i> Áreas de Mejora Prioritarias</div>
+          <div id="lista-mejoras" style="max-height: 250px; overflow-y:auto;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="color: var(--color-primary)"><i class="ti ti-target-arrow"></i> Últimos Compromisos Asumidos</div>
+          <div id="lista-compromisos" style="max-height: 250px; overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
 
-function copyDev(){
-  navigator.clipboard.writeText(textReportCache).then(()=>{
-    const btn=document.getElementById('copy-btn');
-    btn.className='copy-btn copied';
-    btn.innerHTML='<i class="ti ti-check"></i> Copiado con éxito';
-    setTimeout(()=>{btn.className='copy-btn';btn.innerHTML='<i class="ti ti-copy"></i> Copiar devolución'},2500);
-  });
-}
+  </div>
 
-// CONEXIÓN AVANZADA CON GOOGLE DRIVE (TEXTO + AUDIO)
-function sendToDrive() {
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyLBxpMe3Odp4uw_6Ra4_tDI3eZfFlUnSjZsKEdppI_cV4wJUTgSN48jBg-R2N6CY_cRw/exec"; 
+  <script>
+    // ==========================================
+    // CONFIGURACIÓN: PEGA TU URL DE IMPLEMENTACIÓN DE APPS SCRIPT ACÁ
+    // ==========================================
+    const SCRIPT_READ_URL = "https://script.google.com/macros/s/AKfycbyLBxpMe3Odp4uw_6Ra4_tDI3eZfFlUnSjZsKEdppI_cV4wJUTgSN48jBg-R2N6CY_cRw/exec";
+    // ==========================================
 
-  const btn = document.getElementById('drive-btn');
-  btn.innerHTML = '<i class="ti ti-loader animate-spin"></i> Guardando datos...';
-  btn.onclick = null; 
+    let rawData = [];
+    let chartCanalesRef = null;
+    let chartEvolucionRef = null;
 
-  const fileInput = document.getElementById('audio-llamada');
-  const file = fileInput ? fileInput.files[0] : null;
-  const tipoGestion = document.getElementById('tipo').value || 'General';
+    window.addEventListener('DOMContentLoaded', () => {
+      fetch(SCRIPT_READ_URL)
+        .then(res => res.json())
+        .then(res => {
+          if(res.status === "success") {
+            rawData = res.data;
+            document.getElementById('sync-status').className = "badge b-ok";
+            document.getElementById('sync-status').innerHTML = '<i class="ti ti-circle-check"></i> Sincronizado';
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            procesarDashboard();
+          } else {
+            throw new Error(res.message);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('sync-status').className = "badge b-no";
+          document.getElementById('sync-status').innerHTML = '<i class="ti ti-cloud-off"></i> Error de conexión';
+        });
+    });
 
-  const payload = {
-    asesor: document.getElementById('asesor').value || 'Asesor Anónimo',
-    fecha: document.getElementById('fecha').value || 'Sin-Fecha',
-    tipo: tipoGestion,
-    reporteTexto: textReportCache,
-    fileData: null,
-    fileName: null
-  };
-
-  // Solo procesamos audio si no es WhatsApp y el archivo existe
-  if (tipoGestion !== "WhatsApp" && file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const base64Parts = e.target.result.split(',');
-      payload.fileData = base64Parts[1]; 
-      payload.fileName = `${payload.fecha}_${payload.asesor}_${payload.tipo}_llamada.${file.name.split('.').pop()}`;
-      ejecutarEnvio(SCRIPT_URL, payload, btn);
-    };
-    reader.readAsDataURL(file);
-  } else {
-    ejecutarEnvio(SCRIPT_URL, payload, btn);
-  }
-}
-
-function ejecutarEnvio(url, payload, btn) {
-  fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-    body: JSON.stringify(payload)
-  })
-  .then(res => res.json())
-  .then(data => {
-    if(data.status === "success") {
-      btn.className = 'drive-btn success';
-      btn.innerHTML = '<i class="ti ti-check"></i> ¡Todo guardado con éxito!';
-    } else {
-      throw new Error(data.message);
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      document.getElementById('view-' + tab).classList.add('active');
     }
-  })
-  .catch(err => {
-    console.error(err);
-    btn.className = 'drive-btn';
-    btn.innerHTML = '<i class="ti ti-alert-triangle"></i> Error al guardar';
-    btn.onclick = sendToDrive;
-  });
-}
-</script>
+
+    function procesarDashboard() {
+      if(rawData.length === 0) return;
+      
+      // KPIs Globales
+      document.getElementById('kpi-total').textContent = rawData.length;
+      
+      let sumNotas = 0;
+      let cierres = 0;
+      let alertas = 0;
+      let contadoresCanal = { "New Lead": 0, "Remarketing": 0, "WhatsApp": 0 };
+      let asesoresSet = new Set();
+
+      rawData.forEach(row => {
+        sumNotas += parseFloat(row["Nota Final"] || 0);
+        if(row["Lead Arancelado"] === "SI" || row["Lead arancelado"] === "SI") cierres++;
+        if(row["Error Crítico: Falta de Respeto"] === "SI" || row["Error Crítico: Venta Fraudulenta"] === "SI") alertas++;
+        if(contadoresCanal[row["Canal / Tipo de Gestión"]] !== undefined) contadoresCanal[row["Canal / Tipo de Gestión"]]++;
+        if(row["Asesor"]) asesoresSet.add(row["Asesor"]);
+      });
+
+      document.getElementById('kpi-promedio').textContent = Math.round(sumNotas / rawData.length) + "%";
+      document.getElementById('kpi-cierres').textContent = Math.round((cierres / rawData.length) * 100) + "%";
+      document.getElementById('kpi-alertas').textContent = alertas;
+
+      // Cargar selector de asesores
+      const selector = document.getElementById('selector-asesor');
+      Array.from(asesoresSet).sort().forEach(a => {
+        let opt = document.createElement('option');
+        opt.value = a; opt.textContent = a;
+        selector.appendChild(opt);
+      });
+
+      // Renderizar Tabla de Ranking Grupal
+      let ranking = {};
+      rawData.forEach(row => {
+        if(!ranking[row.Asesor]) ranking[row.Asesor] = { notas: 0, cant: 0 };
+        ranking[row.Asesor].notas += parseFloat(row["Nota Final"] || 0);
+        ranking[row.Asesor].cant++;
+      });
+
+      let rankingArr = Object.keys(ranking).map(name => {
+        return { name: name, promedio: Math.round(ranking[name].notas / ranking[name].cant), cant: ranking[name].cant };
+      }).sort((a,b) => b.promedio - a.promedio);
+
+      const tbody = document.querySelector('#ranking-table tbody');
+      tbody.innerHTML = rankingArr.map(r => {
+        let cls = r.promedio >= 70 ? 'b-ok' : r.promedio >= 40 ? 'b-mid' : 'b-no';
+        let txt = r.promedio >= 70 ? 'Aprobado' : r.promedio >= 40 ? 'En desarrollo' : 'Incompleto';
+        return `<tr>
+          <td><strong>${r.name}</strong></td>
+          <td>${r.cant} gds.</td>
+          <td style="font-weight:700; color:var(--color-primary)">${r.promedio}%</td>
+          <td><span class="badge ${cls}">${txt}</span></td>
+        </tr>`;
+      }).join('');
+
+      // Gráfico de Tortas - Canales
+      const ctxCanales = document.getElementById('chartCanales').getContext('2d');
+      chartCanalesRef = new Chart(ctxCanales, {
+        type: 'pie',
+        data: {
+          labels: Object.keys(contadoresCanal),
+          datasets: [{
+            data: Object.values(contadoresCanal),
+            backgroundColor: ['#38bdf8', '#a78bfa', '#10b981'],
+            borderWidth: 0
+          }]
+        },
+        options: { plugins: { legend: { labels: { color: '#fff' } } } }
+      });
+    }
+
+    function renderIndividualData() {
+      const name = document.getElementById('selector-asesor').value;
+      if(!name) return;
+
+      const filtrado = rawData.filter(r => r.Asesor === name).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
+      
+      // Promedio individual
+      let sum = filtrado.reduce((acc, r) => acc + parseFloat(r["Nota Final"] || 0), 0);
+      let prom = Math.round(sum / filtrado.length);
+      document.getElementById('ind-promedio').textContent = prom + "%";
+
+      // Mix de canales
+      let calls = filtrado.filter(r => r["Canal / Tipo de Gestión"] !== "WhatsApp").length;
+      let was = filtrado.filter(r => r["Canal / Tipo de Gestión"] === "WhatsApp").length;
+      document.getElementById('ind-mix').textContent = `Llamadas: ${calls} | WhatsApp: ${was}`;
+
+      // Listas de texto cualitativo (Últimas 5 auditorías)
+      const ultimas = filtrado.slice(-5).reverse();
+      
+      document.getElementById('lista-fortalezas').innerHTML = ultimas.map(r => r["Fortalezas Identificadas"] && r["Fortalezas Identificadas"] !== '—' ? `<div class="text-list-item"><strong>Auditoría ${r.Fecha}</strong>${r["Fortalezas Identificadas"]}</div>` : '').join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin registros.</p>';
+      document.getElementById('lista-mejoras').innerHTML = ultimas.map(r => r["Áreas de Mejora Prioritarias"] && r["Áreas de Mejora Prioritarias"] !== '—' ? `<div class="text-list-item"><strong>Auditoría ${r.Fecha}</strong>${r["Áreas de Mejora Prioritarias"]}</div>` : '').join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin registros.</p>';
+      
+      document.getElementById('lista-compromisos').innerHTML = ultimas.map(r => {
+        let items = [r["Acción / Compromiso 1"], r["Acción / Compromiso 2"], r["Acción / Compromiso 3"]].filter(c => c && c !== '—');
+        if(items.length === 0) return '';
+        return `<div class="text-list-item"><strong>Acuerdos del ${r.Fecha}</strong>${items.map(i => `• ${i}`).join('<br>')}</div>`;
+      }).join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin compromisos anotados.</p>';
+
+      // Gráfico de evolución temporal (Línea)
+      const labels = filtrado.map(r => r.Fecha);
+      const scores = filtrado.map(r => parseFloat(r["Nota Final"] || 0));
+
+      if (chartEvolucionRef) chartEvolucionRef.destroy();
+
+      const ctxEvolucion = document.getElementById('chartEvolucion').getContext('2d');
+      chartEvolucionRef = new Chart(ctxEvolucion, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Calidad %',
+            data: scores,
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56, 189, 248, 0.1)',
+            fill: true,
+            tension: 0.2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+            y: { min: 0, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+  </script>
 </body>
 </html>

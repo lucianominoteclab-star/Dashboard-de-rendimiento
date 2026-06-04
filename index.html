@@ -253,11 +253,11 @@
     const SCRIPT_READ_URL = "https://script.google.com/macros/s/AKfycbyLBxpMe3Odp4uw_6Ra4_tDI3eZfFlUnSjZsKEdppI_cV4wJUTgSN48jBg-R2N6CY_cRw/exec";
     // ==========================================
 
+  // DEFINICIÓN DE VARIABLES GLOBALES (Aseguramos que existan en todo el documento)
     let rawData = [];
     let chartCanalesRef = null;
     let chartEvolucionRef = null;
-    let chartGroupSkillsRef = null;
-    let chartIndividualRadarRef = null;//
+    let chartSkillsRef = null;
 
   // Función que se ejecuta automáticamente al abrir la página
     window.addEventListener('DOMContentLoaded', () => {
@@ -441,9 +441,10 @@
       let valuesSkills = labelsSkills.map(k => skillsCount[k] > 0 ? Math.round((skillsSum[k] / skillsCount[k])) : 0);
 // Evitamos que el canvas se duplique al recargar datos
       if (chartSkillsRef) chartSkillsRef.destroy();
-      // Acá abajo seguía tu lógica normal de inicialización (ejemplo):
-      const ctxGroupSkills = document.getElementById('chartGroupSkills').getContext('2d');
-      chartGroupSkillsRef = new Chart(ctxGroupSkills, {
+
+      const ctxSkills = document.getElementById('chartGroupSkills').getContext('2d');
+      // ¡MUY IMPORTANTE!: Asegurate de asignarle el valor a la variable global asignando directamente:
+      chartSkillsRef = new Chart(ctxSkills, { 
         type: 'bar',
         data: {
           labels: labelsSkills,

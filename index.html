@@ -40,7 +40,12 @@
     .view-section.active { display: block; }
     
     .dash-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-    @media (max-width: 900px) { .dash-row { grid-template-columns: 1fr; } }
+    .dash-row-three { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+    .dash-row-equal { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+    
+    @media (max-width: 1024px) { 
+      .dash-row, .dash-row-three, .dash-row-equal { grid-template-columns: 1fr; } 
+    }
     
     .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; height: 100%; }
     .card-title { font-size: 16px; font-weight: 700; margin-bottom: 1.2rem; color: #fff; display: flex; justify-content: space-between; align-items: center; }
@@ -56,6 +61,20 @@
     .b-mid { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
     .b-no { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
     
+    /* Caja de Alertas Críticas Dinámica */
+    .critical-alert-box { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--border-color); transition: all 0.3s ease; }
+    .critical-alert-box.danger-active { background: rgba(239, 68, 68, 0.08); border-color: var(--color-danger); }
+    .critical-alert-box.success-active { background: rgba(16, 185, 129, 0.05); border-color: var(--color-success); }
+    .critical-badge-num { font-size: 20px; font-weight: 900; padding: 2px 12px; border-radius: 8px; }
+    .critical-badge-num.pulse { animation: critical-pulse 2s infinite; }
+    @keyframes critical-pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+    /* Barra de Progreso para Termómetros */
+    .progress-wrapper { margin-bottom: 14px; }
+    .progress-info { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--text-main); font-weight: 500; }
+    .progress-bar-bg { width: 100%; background: #334155; height: 10px; border-radius: 9999px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 9999px; transition: width 0.5s ease-in-out; }
+
     .text-list-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; line-height: 1.4; }
     .text-list-item strong { color: var(--color-primary); display: block; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; }
     
@@ -138,22 +157,60 @@
           </div>
         </div>
       </div>
+
+      <!-- NUEVA FILA GRUPAL: MAPA DE CALOR + TERMÓMETRO OPERATIVO -->
+      <div class="dash-row-equal">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-flame" style="color:var(--color-warning)"></i> Mapa de Calor: Habilidades del Equipo</div>
+          <div style="position: relative; height: 260px;">
+            <canvas id="chartGroupSkills"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-device-analyser" style="color:var(--color-primary)"></i> Termómetro de Cumplimiento Operativo</div>
+          <div id="checklistGroupContainer" style="max-height: 260px; overflow-y:auto; padding-right: 5px;">
+            <!-- Dinámico por JS -->
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- SECCIÓN VISTA INDIVIDUAL -->
     <div id="view-individual" class="view-section">
-      <select id="selector-asesor" class="selector-box" onchange="renderIndividualData()">
-        <option value="">— Seleccionar Asesor —</option>
-      </select>
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <select id="selector-asesor" class="selector-box" onchange="renderIndividualData()">
+          <option value="">— Seleccionar Asesor —</option>
+        </select>
+
+        <!-- ALERTA DE ERRORES CRÍTICOS INDIVIDUAL -->
+        <div id="individualCriticalAlert" class="critical-alert-box success-active" style="width: 320px; margin-bottom: 1.5rem; display: none;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <i id="criticalIcon" class="ti ti-circle-check" style="font-size:20px; color:var(--color-success)"></i>
+            <div>
+              <div class="kpi-title" style="font-size:11px;">Críticos del Mes</div>
+              <div id="criticalStatusText" style="font-size:13px; font-weight:700; color:#fff;">Sin conductas de riesgo</div>
+            </div>
+          </div>
+          <div id="criticalCounterBadge" class="critical-badge-num" style="background:rgba(16,185,129,0.2); color:var(--color-success);">0</div>
+        </div>
+      </div>
       
-      <div class="dash-row">
+      <!-- FILA DE TRES ELEMENTOS: HISTÓRICO (OCUPA 2) + RADAR (OCUPA 1) + CARD CON KIPS -->
+      <div class="dash-row-three" style="grid-template-columns: 1.5fr 1fr 0.6fr;">
         <div class="card">
           <div class="card-title">Evolución de Calidad (Histórico)</div>
           <div style="position: relative; height: 250px;">
             <canvas id="chartEvolucion"></canvas>
           </div>
         </div>
-        <div class="card" style="display: flex; flex-direction: column; gap: 1rem;">
+        <!-- NUEVO COMPONENTE: RADAR DE COMPETENCIAS -->
+        <div class="card">
+          <div class="card-title">Radar de Competencias</div>
+          <div style="position: relative; height: 230px; display:flex; align-items:center; justify-content:center;">
+            <canvas id="chartIndividualRadar"></canvas>
+          </div>
+        </div>
+        <div class="card" style="display: flex; flex-direction: column; justify-content: center; gap: 1.5rem;">
           <div>
             <div class="kpi-title" style="font-size:11px">Promedio Individual</div>
             <div class="kpi-val" id="ind-promedio" style="font-size:36px; color:var(--color-primary)">—</div>
@@ -188,12 +245,14 @@
     // ==========================================
     // CONFIGURACIÓN: PEGA TU URL DE IMPLEMENTACIÓN DE APPS SCRIPT ACÁ
     // ==========================================
-    const SCRIPT_READ_URL = "https://script.google.com/macros/s/AKfycbyLBxpMe3Odp4uw_6Ra4_tDI3eZfFlUnSjZsKEdppI_cV4wJUTgSN48jBg-R2N6CY_cRw/exec";
+    const SCRIPT_READ_URL = "TU_NUEVA_URL_DE_APPLICATIONS_SCRIPT_AQUÍ";
     // ==========================================
 
     let rawData = [];
     let chartCanalesRef = null;
     let chartEvolucionRef = null;
+    let chartGroupSkillsRef = null;
+    let chartIndividualRadarRef = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       fetch(SCRIPT_READ_URL)
@@ -236,12 +295,36 @@
       let contadoresCanal = { "New Lead": 0, "Remarketing": 0, "WhatsApp": 0 };
       let asesoresSet = new Set();
 
+      // Acumuladores del Mapa de Calor (Bloques)
+      let skillsSum = { "Apertura": 0, "Indagación": 0, "Propuesta de Valor": 0, "Manejo de Objeciones": 0, "Cierre": 0 };
+      let skillsCount = { "Apertura": 0, "Indagación": 0, "Propuesta de Valor": 0, "Manejo de Objeciones": 0, "Cierre": 0 };
+
+      // Acumuladores de Procesos Operativos (Termómetros)
+      let opsSum = { "Registro en CRM": 0, "Ofreció Preinscripción": 0, "Indagó Métodos de Pago": 0, "Cierre Administrativo": 0 };
+      let opsCount = { "Registro en CRM": 0, "Ofreció Preinscripción": 0, "Indagó Métodos de Pago": 0, "Cierre Administrativo": 0 };
+
       rawData.forEach(row => {
         sumNotas += parseFloat(row["Nota Final"] || 0);
         if(row["Lead Arancelado"] === "SI" || row["Lead arancelado"] === "SI") cierres++;
+        
+        // Conteo de Alertas Críticas Globales
         if(row["Error Crítico: Falta de Respeto"] === "SI" || row["Error Crítico: Venta Fraudulenta"] === "SI") alertas++;
+        
         if(contadoresCanal[row["Canal / Tipo de Gestión"]] !== undefined) contadoresCanal[row["Canal / Tipo de Gestión"]]++;
         if(row["Asesor"]) asesoresSet.add(row["Asesor"]);
+
+        // Sumas para habilidades comerciales generales (Cálculo del mapa de calor)
+        if(row["Apertura"] !== undefined && row["Apertura"] !== "") { skillsSum["Apertura"] += parseFloat(row["Apertura"]); skillsCount["Apertura"]++; }
+        if(row["Indagación"] !== undefined && row["Indagación"] !== "") { skillsSum["Indagación"] += parseFloat(row["Indagación"]); skillsCount["Indagación"]++; }
+        if(row["Propuesta de Valor"] !== undefined && row["Propuesta de Valor"] !== "") { skillsSum["Propuesta de Valor"] += parseFloat(row["Propuesta de Valor"]); skillsCount["Propuesta de Valor"]++; }
+        if(row["Manejo de Objeciones"] !== undefined && row["Manejo de Objeciones"] !== "") { skillsSum["Manejo de Objeciones"] += parseFloat(row["Manejo de Objeciones"]); skillsCount["Manejo de Objeciones"]++; }
+        if(row["Cierre"] !== undefined && row["Cierre"] !== "") { skillsSum["Cierre"] += parseFloat(row["Cierre"]); skillsCount["Cierre"]++; }
+
+        // Sumas para checklist duro operativo
+        if(row["Registro en CRM"] !== undefined && row["Registro en CRM"] !== "") { opsSum["Registro en CRM"] += parseFloat(row["Registro en CRM"]); opsCount["Registro en CRM"]++; }
+        if(row["Ofreció Preinscripción"] !== undefined && row["Ofreció Preinscripción"] !== "") { opsSum["Ofreció Preinscripción"] += parseFloat(row["Ofreció Preinscripción"]); opsCount["Ofreció Preinscripción"]++; }
+        if(row["Indagó Métodos de Pago"] !== undefined && row["Indagó Métodos de Pago"] !== "") { opsSum["Indagó Métodos de Pago"] += parseFloat(row["Indagó Métodos de Pago"]); opsCount["Indagó Métodos de Pago"]++; }
+        if(row["Cierre Administrativo"] !== undefined && row["Cierre Administrativo"] !== "") { opsSum["Cierre Administrativo"] += parseFloat(row["Cierre Administrativo"]); opsCount["Cierre Administrativo"]++; }
       });
 
       document.getElementById('kpi-promedio').textContent = Math.round(sumNotas / rawData.length) + "%";
@@ -260,12 +343,12 @@
       let ranking = {};
       rawData.forEach(row => {
         if(!ranking[row.Asesor]) ranking[row.Asesor] = { notas: 0, cant: 0 };
-        ranking[row.Asesor].notas += parseFloat(row["Nota Final"] || 0);
+        ranking[row.Asesor].notesSum = (ranking[row.Asesor].notesSum || 0) + parseFloat(row["Nota Final"] || 0);
         ranking[row.Asesor].cant++;
       });
 
       let rankingArr = Object.keys(ranking).map(name => {
-        return { name: name, promedio: Math.round(ranking[name].notas / ranking[name].cant), cant: ranking[name].cant };
+        return { name: name, promedio: Math.round(ranking[name].notesSum / ranking[name].cant), cant: ranking[name].cant };
       }).sort((a,b) => b.promedio - a.promedio);
 
       const tbody = document.querySelector('#ranking-table tbody');
@@ -294,11 +377,67 @@
         },
         options: { plugins: { legend: { labels: { color: '#fff' } } } }
       });
+
+      // --- VISUAL 1: RENDIMIENTO MAPA DE CALOR (BARRAS HORIZONTALES GRUPAL) ---
+      let labelsSkills = Object.keys(skillsSum);
+      let valuesSkills = labelsSkills.map(k => skillsCount[k] > 0 ? Math.round((skillsSum[k] / skillsCount[k])) : 0);
+
+      const ctxGroupSkills = document.getElementById('chartGroupSkills').getContext('2d');
+      chartGroupSkillsRef = new Chart(ctxGroupSkills, {
+        type: 'bar',
+        data: {
+          labels: labelsSkills,
+          datasets: [{
+            data: valuesSkills,
+            backgroundColor: valuesSkills.map(v => v >= 75 ? '#10b981' : (v >= 50 ? '#f59e0b' : '#ef4444')),
+            borderRadius: 6,
+            borderWidth: 0
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { min: 0, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+            y: { grid: { display: false }, ticks: { color: '#fff', font: { weight: 'bold' } } }
+          }
+        }
+      });
+
+      // --- VISUAL 2: TERMÓMETROS OPERATIVOS DEL CHECKLIST GRUPAL ---
+      const checklistContainer = document.getElementById('checklistGroupContainer');
+      checklistContainer.innerHTML = '';
+      
+      Object.keys(opsSum).forEach(key => {
+        let percentage = opsCount[key] > 0 ? Math.round((opsSum[key] / opsCount[key])) : 0;
+        let colorClass = percentage >= 80 ? 'var(--color-success)' : (percentage >= 60 ? 'var(--color-warning)' : 'var(--color-danger)');
+        
+        let termometroHtml = `
+          <div class="progress-wrapper">
+            <div class="progress-info">
+              <span>${key}</span>
+              <span style="color: ${colorClass}">${percentage}%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" style="width: ${percentage}%; background-color: ${colorClass}"></div>
+            </div>
+          </div>
+        `;
+        checklistContainer.insertAdjacentHTML('beforeend', termometroHtml);
+      });
     }
 
     function renderIndividualData() {
       const name = document.getElementById('selector-asesor').value;
-      if(!name) return;
+      if(!name) {
+        document.getElementById('individualCriticalAlert').style.display = 'none';
+        return;
+      }
+
+      // Mostrar caja de críticos una vez seleccionado el asesor
+      document.getElementById('individualCriticalAlert').style.display = 'flex';
 
       const filtrado = rawData.filter(r => r.Asesor === name).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
       
@@ -354,6 +493,96 @@
           plugins: { legend: { display: false } }
         }
       });
+
+      // --- VISUAL 3: GRÁFICO DE RADAR INDIVIDUAL (PERFIL DE COMPETENCIAS) ---
+      let indSkillsSum = { "Apertura": 0, "Indagación": 0, "Propuesta": 0, "Objeciones": 0, "Cierre": 0 };
+      let indSkillsCount = { "Apertura": 0, "Indagación": 0, "Propuesta": 0, "Objeciones": 0, "Cierre": 0 };
+      
+      // Conteo específico de Alertas Críticas para el Asesor Seleccionado
+      let individualCriticalCount = 0;
+
+      filtrado.forEach(row => {
+        if(row["Apertura"] !== undefined && row["Apertura"] !== "") { indSkillsSum["Apertura"] += parseFloat(row["Apertura"]); indSkillsCount["Apertura"]++; }
+        if(row["Indagación"] !== undefined && row["Indagación"] !== "") { indSkillsSum["Indagación"] += parseFloat(row["Indagación"]); indSkillsCount["Indagación"]++; }
+        if(row["Propuesta de Valor"] !== undefined && row["Propuesta de Valor"] !== "") { indSkillsSum["Propuesta"] += parseFloat(row["Propuesta de Valor"]); indSkillsCount["Propuesta"]++; }
+        if(row["Manejo de Objeciones"] !== undefined && row["Manejo de Objeciones"] !== "") { indSkillsSum["Objeciones"] += parseFloat(row["Manejo de Objeciones"]); indSkillsCount["Objeciones"]++; }
+        if(row["Cierre"] !== undefined && row["Cierre"] !== "") { indSkillsSum["Cierre"] += parseFloat(row["Cierre"]); indSkillsCount["Cierre"]++; }
+
+        // Sumador de críticos de la ficha individual
+        if(row["Error Crítico: Falta de Respeto"] === "SI" || row["Error Crítico: Venta Fraudulenta"] === "SI") {
+          individualCriticalCount++;
+        }
+      });
+
+      let radarLabels = ["Apertura", "Indagación", "Propuesta Valor", "Objeciones", "Cierre"];
+      let radarValues = [
+        indSkillsCount["Apertura"] > 0 ? Math.round(indSkillsSum["Apertura"]) : 0,
+        indSkillsCount["Indagación"] > 0 ? Math.round(indSkillsSum["Indagación"]) : 0,
+        indSkillsCount["Propuesta"] > 0 ? Math.round(indSkillsSum["Propuesta"]) : 0,
+        indSkillsCount["Objeciones"] > 0 ? Math.round(indSkillsSum["Objeciones"]) : 0,
+        indSkillsCount["Cierre"] > 0 ? Math.round(indSkillsSum["Cierre"]) : 0
+      ];
+
+      if (chartIndividualRadarRef) chartIndividualRadarRef.destroy();
+      const ctxRadar = document.getElementById('chartIndividualRadar').getContext('2d');
+      chartIndividualRadarRef = new Chart(ctxRadar, {
+        type: 'radar',
+        data: {
+          labels: radarLabels,
+          datasets: [{
+            label: 'Desempeño %',
+            data: radarValues,
+            backgroundColor: 'rgba(56, 189, 248, 0.15)',
+            borderColor: '#38bdf8',
+            pointBackgroundColor: '#38bdf8',
+            pointBorderColor: '#fff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            r: {
+              angleLines: { color: '#334155' },
+              grid: { color: '#334155' },
+              pointLabels: { color: '#94a3b8', font: { size: 10, weight: '600' } },
+              ticks: { display: false },
+              min: 0,
+              max: 100
+            }
+          }
+        }
+      });
+
+      // --- VISUAL 4: RENDERIZADO DINÁMICO DE COMPONENTE DE ERRORES CRÍTICOS ---
+      const alertContainer = document.getElementById('individualCriticalAlert');
+      const alertIcon = document.getElementById('criticalIcon');
+      const alertText = document.getElementById('criticalStatusText');
+      const alertBadge = document.getElementById('criticalCounterBadge');
+
+      alertBadge.textContent = individualCriticalCount;
+
+      if(individualCriticalCount > 0) {
+        // Modo Peligro Activo
+        alertContainer.className = "critical-alert-box danger-active";
+        alertIcon.className = "ti ti-alert-octagon";
+        alertIcon.style.color = "var(--color-danger)";
+        alertText.textContent = "Alerta: Faltas Críticas detectadas";
+        alertBadge.className = "critical-badge-num pulse";
+        alertBadge.style.backgroundColor = "var(--color-danger)";
+        alertBadge.style.color = "#fff";
+      } else {
+        // Modo Limpio / Seguro
+        alertContainer.className = "critical-alert-box success-active";
+        alertIcon.className = "ti ti-circle-check";
+        alertIcon.style.color = "var(--color-success)";
+        alertText.textContent = "Sin conductas de riesgo";
+        alertBadge.className = "critical-badge-num";
+        alertBadge.style.backgroundColor = "rgba(16, 185, 129, 0.15)";
+        alertBadge.style.color = "var(--color-success)";
+      }
     }
   </script>
 </body>

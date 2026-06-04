@@ -85,12 +85,17 @@
 </head>
 <body>
 
-  <div class="header-dash">
+ <div class="header-dash">
     <div class="title-area">
       <h1>Tablero de Calidad Operativa</h1>
       <p>Fundación Cenedudes · Resumen unificado de gestión de canales</p>
     </div>
-    <div id="sync-status" class="badge b-mid"><i class="ti ti-refresh-dot"></i> Conectando con Google Sheets...</div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <button id="btn-refresh" onclick="recargarDatosManual()" class="tab-btn" style="margin-bottom:0; padding: 6px 12px; font-size: 13px;">
+        <i class="ti ti-refresh"></i> Recargar Datos
+      </button>
+      <div id="sync-status" class="badge b-mid"><i class="ti ti-refresh-dot"></i> Conectando con Google Sheets...</div>
+    </div>
   </div>
 
   <div class="nav-tabs">
@@ -254,7 +259,13 @@
     let chartGroupSkillsRef = null;
     let chartIndividualRadarRef = null;
 
+  // Función que se ejecuta automáticamente al abrir la página
     window.addEventListener('DOMContentLoaded', () => {
+      cargarDatosDesdeSheet();
+    });
+
+    // Función base para conectar con la API de Google Apps Script
+    function cargarDatosDesdeSheet() {
       fetch(SCRIPT_READ_URL)
         .then(res => res.json())
         .then(res => {
@@ -264,7 +275,28 @@
             document.getElementById('sync-status').innerHTML = '<i class="ti ti-circle-check"></i> Sincronizado';
             document.getElementById('loader').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
+            
+            // Guardamos temporalmente el asesor que estaba seleccionado antes de recargar
+            const selector = document.getElementById('selector-asesor');
+            const asesorPreseleccionado = selector.value;
+            
+            // Limpiamos el selector para evitar duplicados
+            selector.innerHTML = '<option value="">— Seleccionar Asesor —</option>';
+            
+            // Volvemos a procesar el tablero grupal y recargar la lista de asesores
             procesarDashboard();
+
+            // Si había un asesor seleccionado, lo restauramos y actualizamos su radar
+            if(asesorPreseleccionado) {
+              selector.value = asesorPreseleccionado;
+              renderIndividualData();
+            } else {
+              // Si no había nadie seleccionado, nos aseguramos de limpiar los gráficos individuales antiguos
+              if (chartEvolucionRef) {
+                chartEvolucionRef.destroy();
+                chartEvolucionRef = null;
+              }
+            }
           } else {
             throw new Error(res.message);
           }
@@ -273,8 +305,26 @@
           console.error(err);
           document.getElementById('sync-status').className = "badge b-no";
           document.getElementById('sync-status').innerHTML = '<i class="ti ti-cloud-off"></i> Error de conexión';
+          
+          const btn = document.getElementById('btn-refresh');
+          if(btn) btn.innerHTML = '<i class="ti ti-refresh"></i> Recargar Datos';
         });
-    });
+    }
+
+    // Acción que se dispara al tocar el botón nuevo
+    function recargarDatosManual() {
+      const btn = document.getElementById('btn-refresh');
+      document.getElementById('sync-status').className = "badge b-mid";
+      document.getElementById('sync-status').innerHTML = '<i class="ti ti-refresh-dot"></i> Actualizando...';
+      btn.innerHTML = '<i class="ti ti-loader quarter-spin"></i> Cargando...';
+      
+      cargarDatosDesdeSheet();
+      
+      // Restauramos el aspecto del botón después de un breve delay
+      setTimeout(() => {
+        btn.innerHTML = '<i class="ti ti-refresh"></i> Recargar Datos';
+      }, 1200);
+    }
 
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -364,6 +414,14 @@
       }).join('');
 
       // Gráfico de Tortas - Canales
+     // ==========================================
+      // PASO 3 CORRECTO: CANALES CON DESTRUCCIÓN ACTIVA
+      // ==========================================
+      
+      // 1. Validamos si el gráfico ya existía en memoria para destruirlo antes de redibujar
+      if (chartCanalesRef) chartCanalesRef.destroy(); 
+
+      // 2. Ahora sí, creamos el gráfico de torta de canales normalmente
       const ctxCanales = document.getElementById('chartCanales').getContext('2d');
       chartCanalesRef = new Chart(ctxCanales, {
         type: 'pie',
@@ -429,12 +487,25 @@
       });
     }
 
-    function renderIndividualData() {
+  function renderIndividualData() {
       const name = document.getElementById('selector-asesor').value;
+      
+      // SI NO HAY ASESOR SELECCIONADO, LIMPIAMOS TODO Y SALIMOS
       if(!name) {
-        document.getElementById('individualCriticalAlert').style.display = 'none';
+        document.getElementById('ind-promedio').textContent = "—";
+        document.getElementById('ind-mix').textContent = "Llamadas: 0 | WhatsApp: 0";
+        document.getElementById('lista-fortalezas').innerHTML = '';
+        document.getElementById('lista-mejoras').innerHTML = '';
+        document.getElementById('lista-compromisos').innerHTML = '';
+        if (chartEvolucionRef) {
+          chartEvolucionRef.destroy();
+          chartEvolucionRef = null;
+        }
         return;
       }
+
+      // ... (Acá abajo continúa todo el resto de tu código normal de filtrado y gráficos)
+      const filtrado = rawData.filter(r => r.Asesor === name).sort((a,b) => new Date(a.Fecha) - new Date(b.Fecha));
 
       // Mostrar caja de críticos una vez seleccionado el asesor
       document.getElementById('individualCriticalAlert').style.display = 'flex';

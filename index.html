@@ -494,8 +494,8 @@
 
     function badgePorPorcentaje(p) {
       if (p >= 70) return { cls: 'b-ok',  txt: 'Aprobado'       };
-      if (p >= 40) return { cls: 'b-mid', txt: 'En desarrollo'   };
-      return              { cls: 'b-no',  txt: 'Incompleto'      };
+      if (p >= 40) return { cls: 'b-mid', txt: 'Regular'   };
+      return              { cls: 'b-no',  txt: 'Desaprobado'      };
     }
 
     function calcTrend(current, previous, higherIsBetter = true) {

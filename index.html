@@ -721,92 +721,145 @@
     // ============================================================
     // VISTA INDIVIDUAL
     // ============================================================
-   function renderIndividualData() {
-      const name = document.getElementById('selector-asesor').value;
-      if (!name) {
-        resetIndividualView();
-        return;
-      }
+   function procesarDashboard() {
+      if (!rawData || rawData.length === 0) return;
 
-      // Filtrado y ordenamiento por fecha de las gestiones del asesor
-      const filtrado = rawData.filter(r => r.Asesor === name)
-                              .sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
-
-      if (filtrado.length === 0) {
-        resetIndividualView();
-        return;
-      }
-
-      // 1. CALCULO DE PROMEDIOS INDIVIDUALES
-      let sumNotas = filtrado.reduce((acc, r) => acc + parseFloat(r["Nota Final"] || 0), 0);
-      let prom = Math.round(sumNotas / filtrado.length);
-      
-      const indProm = document.getElementById('ind-promedio');
-      indProm.textContent = prom + "%";
-      if (prom >= 70) { indProm.style.color = 'var(--color-success)'; }
-      else if (prom >= 40) { indProm.style.color = 'var(--color-warning)'; }
-      else { indProm.style.color = 'var(--color-danger)'; }
-
-      let cls = prom >= 70 ? 'b-ok' : prom >= 40 ? 'b-mid' : 'b-no';
-      let txt = prom >= 70 ? 'Aprobado' : prom >= 40 ? 'En desarrollo' : 'Incompleto';
-      document.getElementById('ind-estado').innerHTML = `<span class="badge ${cls}">${txt}</span>`;
-      document.getElementById('ind-cant').textContent = filtrado.length + " gds.";
-
-      // 2. MIX OPERATIVO (Normalización de texto para evitar fallas de mayúsculas/espacios)
-      let calls = 0;
-      let was = 0;
-      filtrado.forEach(r => {
-        let canal = String(r["Canal / Tipo de Gestión"] || "").trim().toLowerCase();
-        if (canal.includes("whatsapp")) { was++; } else { calls++; }
+      // 1. SELECTOR DE ASESORES (Eliminar duplicados y rellenar dinámicamente)
+      const asesoresSet = new Set();
+      rawData.forEach(r => {
+        if (r.Asesor) asesoresSet.add(r.Asesor.trim());
       });
-      document.getElementById('ind-mix').textContent = `Llamadas: ${calls} | WhatsApp: ${was}`;
+      
+      const selector = document.getElementById('selector-asesor');
+      // Mantenemos la opción por defecto y agregamos los asesores reales
+      selector.innerHTML = '<option value="">— Seleccionar Asesor —</option>';
+      Array.from(asesoresSet).sort().forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a;
+        opt.textContent = a;
+        selector.appendChild(opt);
+      });
 
-      // 3. ALERTAS CRÍTICAS INDIVIDUALES
-      let alertaInd = filtrado.some(r => 
-        String(r["Error Crítico: Falta de Respeto"]).toUpperCase() === "SI" || 
-        String(r["Error Crítico: Venta Fraudulenta"]).toUpperCase() === "SI"
-      );
-      document.getElementById('individualCriticalAlert').style.display = alertaInd ? 'flex' : 'none';
+      // 2. CÁLCULO DE MÉTRICAS GLOBALES DEL EQUIPO
+      let totalNotas = 0;
+      let totalAuditorias = rawData.length;
+      let contadoresCanal = {};
+      let alertCriticaGlobal = false;
 
-      // 4. LISTAS CUALITATIVAS (Últimas 5 auditorías)
-      const ultimas = filtrado.slice(-5).reverse();
+      // Estructura para almacenar promedios del ranking por Asesor
+      let asesoresData = {};
 
-      document.getElementById('lista-fortalezas').innerHTML = ultimas.map(r => {
-        let val = r["Fortalezas Identificadas"] || r["Fortalezas"] || "—";
-        return val !== "—" ? `<div class="text-list-item"><strong>Auditoría ${r.Fecha || ''}</strong>${val}</div>` : '';
-      }).join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin registros.</p>';
+      // Variables para el mapa de calor (Skills grupales)
+      let skillsSum = { "Apertura": 0, "Indagación": 0, "Argumentación": 0, "Objeciones": 0, "Cierre": 0 };
+      let skillsCount = { "Apertura": 0, "Indagación": 0, "Argumentación": 0, "Objeciones": 0, "Cierre": 0 };
 
-      document.getElementById('lista-mejoras').innerHTML = ultimas.map(r => {
-        let val = r["Áreas de Mejora Prioritarias"] || r["Áreas de Mejora"] || "—";
-        return val !== "—" ? `<div class="text-list-item"><strong>Auditoría ${r.Fecha || ''}</strong>${val}</div>` : '';
-      }).join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin registros.</p>';
+      rawData.forEach(r => {
+        // Unificamos nota final (manejando strings o números)
+        let nota = parseFloat(r["Nota Final"] || 0);
+        totalNotas += nota;
 
-      document.getElementById('lista-compromisos').innerHTML = ultimas.map(r => {
-        let c1 = r["Acción / Compromiso 1"] || r["Compromiso 1"] || "";
-        let c2 = r["Acción / Compromiso 2"] || r["Compromiso 2"] || "";
-        let c3 = r["Acción / Compromiso 3"] || r["Compromiso 3"] || "";
-        let items = [c1, c2, c3].filter(c => c && c !== '—');
-        if (items.length === 0) return '';
-        return `<div class="text-list-item"><strong>Acuerdos del ${r.Fecha || ''}</strong>${items.map(i => `• ${i}`).join('<br>')}</div>`;
-      }).join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin compromisos anotados.</p>';
+        // Acumulador para el ranking individual
+        let nombreAsesor = r.Asesor ? r.Asesor.trim() : "Desconocido";
+        if (!asesoresData[nombreAsesor]) {
+          asesoresData[nombreAsesor] = { suma: 0, cantidad: 0 };
+        }
+        asesoresData[nombreAsesor].suma += nota;
+        asesoresData[nombreAsesor].cantidad += 1;
 
-      // 5. GRÁFICO HISTÓRICO INDIVIDUAL (LÍNEAS)
-      const labels = filtrado.map(r => r.Fecha || '');
-      const scores = filtrado.map(r => parseFloat(r["Nota Final"] || 0));
+        // Conteo de Canales (Llamadas vs WhatsApp) de forma segura
+        let canal = String(r["Canal / Tipo de Gestión"] || "").trim().toLowerCase();
+        let canalKey = canal.includes("whatsapp") ? "WhatsApp" : "Llamadas";
+        contadoresCanal[canalKey] = (contadoresCanal[canalKey] || 0) + 1;
 
-      if (chartEvolucionRef) chartEvolucionRef.destroy();
-      const ctxEvolucion = document.getElementById('chartEvolucion').getContext('2d');
-      chartEvolucionRef = new Chart(ctxEvolucion, {
-        type: 'line',
+        // Alertas Críticas Globales
+        if (String(r["Error Crítico: Falta de Respeto"]).toUpperCase() === "SI" || 
+            String(r["Error Crítico: Venta Fraudulenta"]).toUpperCase() === "SI") {
+          alertCriticaGlobal = true;
+        }
+
+        // Mapeo dinámico de Competencias para el Mapa de Calor
+        skillsSum["Apertura"] += parseFloat(r["Apertura y Empatía"] || r["Apertura"] || 0);
+        skillsCount["Apertura"] += 1;
+        skillsSum["Indagación"] += parseFloat(r["Indagación y Detección de Necesidades"] || r["Indagación"] || 0);
+        skillsCount["Indagación"] += 1;
+        skillsSum["Argumentación"] += parseFloat(r["Argumentación Comercial y Propuesta de Valor"] || r["Argumentación"] || 0);
+        skillsCount["Argumentación"] += 1;
+        skillsSum["Objeciones"] += parseFloat(r["Manejo de Objeciones y Rebatimiento"] || r["Objeciones"] || 0);
+        skillsCount["Objeciones"] += 1;
+        skillsSum["Cierre"] += parseFloat(r["Cierre de Venta y Siguientes Pasos"] || r["Cierre"] || 0);
+        skillsCount["Cierre"] += 1;
+      });
+
+      // Renderizado de las tarjetas principales (KPIs de arriba)
+      let promedioGeneral = Math.round(totalNotas / totalAuditorias);
+      document.getElementById('team-promedio').textContent = promedioGeneral + "%";
+      document.getElementById('team-auditorias').textContent = totalAuditorias;
+      document.getElementById('globalCriticalAlert').style.display = alertCriticaGlobal ? 'flex' : 'none';
+
+      // 3. RENDERIZADO DEL RANKING DE ASESORES (TABLA DE POSICIONES)
+      let listaRanking = [];
+      Object.keys(asesoresData).forEach(name => {
+        let promInd = Math.round(asesoresData[name].suma / asesoresData[name].cantidad);
+        listaRanking.push({ name: name, promedio: promInd });
+      });
+      // Ordenamos de mayor a menor nota promedio
+      listaRanking.sort((a, b) => b.promedio - a.promedio);
+
+      const tablaRanking = document.getElementById('lista-ranking');
+      tablaRanking.innerHTML = ''; // Limpiamos tabla vieja
+      
+      listaRanking.forEach((item, index) => {
+        let badgeClass = item.promedio >= 70 ? 'b-ok' : item.promedio >= 40 ? 'b-mid' : 'b-no';
+        let badgeText = item.promedio >= 70 ? 'Aprobado' : item.promedio >= 40 ? 'En desarrollo' : 'Incompleto';
+        
+        let filaHtml = `
+          <tr>
+            <td style="text-align:center; font-weight:bold; color:var(--text-muted);">#${index + 1}</td>
+            <td><strong>${item.name}</strong></td>
+            <td style="text-align:center; font-weight:bold; font-size:15px; color:var(--color-primary);">${item.promedio}%</td>
+            <td style="text-align:center;"><span class="badge ${badgeClass}">${badgeText}</span></td>
+          </tr>
+        `;
+        tablaRanking.innerHTML += filaHtml;
+      });
+
+      // 4. GRÁFICO DE TORTAS (DISTRIBUCIÓN DE CANALES)
+      if (chartCanalesRef) chartCanalesRef.destroy(); 
+      const ctxCanales = document.getElementById('chartCanales').getContext('2d');
+      chartCanalesRef = new Chart(ctxCanales, {
+        type: 'pie',
         data: {
-          labels: labels,
+          labels: Object.keys(contadoresCanal),
           datasets: [{
-            label: 'Calidad %',
-            data: scores,
+            data: Object.values(contadoresCanal),
+            backgroundColor: ['#38bdf8', '#a78bfa', '#10b981'],
+            borderWidth: 0
+          }]
+        },
+        options: { 
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#fff' } } } 
+        }
+      });
+
+      // 5. GRÁFICO DE BARRAS (RENDIMIENTO MAPA DE CALOR GRUPAL)
+      let labelsSkills = Object.keys(skillsSum);
+      let valuesSkills = labelsSkills.map(k => skillsCount[k] > 0 ? Math.round((skillsSum[k] / skillsCount[k])) : 0);
+
+      if (chartSkillsRef) chartSkillsRef.destroy();
+      const ctxSkills = document.getElementById('chartGroupSkills').getContext('2d');
+      chartSkillsRef = new Chart(ctxSkills, {
+        type: 'bar',
+        data: {
+          labels: labelsSkills,
+          datasets: [{
+            label: 'Promedio Equipo %',
+            data: valuesSkills,
+            backgroundColor: 'rgba(56, 189, 248, 0.4)',
             borderColor: '#38bdf8',
-            backgroundColor: 'rgba(56, 189, 248, 0.1)',
-            fill: true,
-            tension: 0.2
+            borderWidth: 1,
+            borderRadius: 4
           }]
         },
         options: {
@@ -815,53 +868,6 @@
           scales: {
             x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
             y: { min: 0, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
-          },
-          plugins: { legend: { display: false } }
-        }
-      });
-
-      // 6. RADAR DE COMPETENCIAS (Cálculo dinámico por fila con fallback de nombres)
-      let habilidades = ["Apertura", "Indagación", "Argumentación", "Objeciones", "Cierre"];
-      let sumHabilidades = [0, 0, 0, 0, 0];
-
-      filtrado.forEach(r => {
-        // Buscamos propiedades mapeando variaciones comunes de nombres en las columnas
-        sumHabilidades[0] += parseFloat(r["Apertura y Empatía"] || r["Apertura"] || 0);
-        sumHabilidades[1] += parseFloat(r["Indagación y Detección de Necesidades"] || r["Indagación"] || 0);
-        sumHabilidades[2] += parseFloat(r["Argumentación Comercial y Propuesta de Valor"] || r["Argumentación"] || 0);
-        sumHabilidades[3] += parseFloat(r["Manejo de Objeciones y Rebatimiento"] || r["Objeciones"] || 0);
-        sumHabilidades[4] += parseFloat(r["Cierre de Venta y Siguientes Pasos"] || r["Cierre"] || 0);
-      });
-
-      let avgHabilidades = sumHabilidades.map(v => Math.round(v / filtrado.length));
-
-      if (chartRadarRef) chartRadarRef.destroy();
-      const ctxRadar = document.getElementById('chartRadar').getContext('2d');
-      chartRadarRef = new Chart(ctxRadar, {
-        type: 'radar',
-        data: {
-          labels: habilidades,
-          datasets: [{
-            label: 'Rendimiento Promedio',
-            data: avgHabilidades,
-            backgroundColor: 'rgba(56, 189, 248, 0.2)',
-            borderColor: '#38bdf8',
-            pointBackgroundColor: '#38bdf8',
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            r: {
-              grid: { color: '#334155' },
-              angleLines: { color: '#334155' },
-              pointLabels: { color: '#94a3b8', font: { size: 11 } },
-              ticks: { display: false },
-              min: 0,
-              max: 100
-            }
           },
           plugins: { legend: { display: false } }
         }

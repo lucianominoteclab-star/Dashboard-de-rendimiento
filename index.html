@@ -721,107 +721,92 @@
     // ============================================================
     // VISTA INDIVIDUAL
     // ============================================================
-    function renderIndividualData() {
+   function renderIndividualData() {
       const name = document.getElementById('selector-asesor').value;
-
       if (!name) {
         resetIndividualView();
         return;
       }
 
-      const filtrado = filteredData
-        .filter(r => r[FIELDS.asesor] === name)
-        .sort((a, b) => new Date(a[FIELDS.fecha]) - new Date(b[FIELDS.fecha]));
+      // Filtrado y ordenamiento por fecha de las gestiones del asesor
+      const filtrado = rawData.filter(r => r.Asesor === name)
+                              .sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
 
       if (filtrado.length === 0) {
         resetIndividualView();
-        document.getElementById('ind-promedio').textContent = 'Sin datos';
         return;
       }
 
-      // Promedio individual
-      const sum    = filtrado.reduce((acc, r) => acc + parseFloat(r[FIELDS.notaFinal] || 0), 0);
-      const prom   = Math.round(sum / filtrado.length);
-      const color  = colorPorPorcentaje(prom);
-      const { cls, txt } = badgePorPorcentaje(prom);
+      // 1. CALCULO DE PROMEDIOS INDIVIDUALES
+      let sumNotas = filtrado.reduce((acc, r) => acc + parseFloat(r["Nota Final"] || 0), 0);
+      let prom = Math.round(sumNotas / filtrado.length);
+      
+      const indProm = document.getElementById('ind-promedio');
+      indProm.textContent = prom + "%";
+      if (prom >= 70) { indProm.style.color = 'var(--color-success)'; }
+      else if (prom >= 40) { indProm.style.color = 'var(--color-warning)'; }
+      else { indProm.style.color = 'var(--color-danger)'; }
 
-      document.getElementById('ind-promedio').textContent = prom + "%";
-      document.getElementById('ind-promedio').style.color = color;
-      document.getElementById('ind-estado').innerHTML     = `<span class="badge ${cls}">${txt}</span>`;
-      document.getElementById('ind-cant').textContent     = filtrado.length + " auditorías";
+      let cls = prom >= 70 ? 'b-ok' : prom >= 40 ? 'b-mid' : 'b-no';
+      let txt = prom >= 70 ? 'Aprobado' : prom >= 40 ? 'En desarrollo' : 'Incompleto';
+      document.getElementById('ind-estado').innerHTML = `<span class="badge ${cls}">${txt}</span>`;
+      document.getElementById('ind-cant').textContent = filtrado.length + " gds.";
 
-      // Mix operativo
-      const calls = filtrado.filter(r => r[FIELDS.canal] !== "WhatsApp").length;
-      const was   = filtrado.filter(r => r[FIELDS.canal] === "WhatsApp").length;
+      // 2. MIX OPERATIVO (Normalización de texto para evitar fallas de mayúsculas/espacios)
+      let calls = 0;
+      let was = 0;
+      filtrado.forEach(r => {
+        let canal = String(r["Canal / Tipo de Gestión"] || "").trim().toLowerCase();
+        if (canal.includes("whatsapp")) { was++; } else { calls++; }
+      });
       document.getElementById('ind-mix').textContent = `Llamadas: ${calls} | WhatsApp: ${was}`;
 
-      // Alertas críticas individuales
-      const criticos = filtrado.filter(r => r[FIELDS.errorRespeto] === "SI" || r[FIELDS.errorFraude] === "SI").length;
-      const alertBox  = document.getElementById('individualCriticalAlert');
-      alertBox.style.display = 'flex';
-      if (criticos > 0) {
-        alertBox.className = 'critical-alert-box danger-active';
-        document.getElementById('criticalIcon').className        = 'ti ti-alert-triangle';
-        document.getElementById('criticalIcon').style.color      = 'var(--color-danger)';
-        document.getElementById('criticalStatusText').textContent = 'Conductas de riesgo detectadas';
-        const badge = document.getElementById('criticalCounterBadge');
-        badge.textContent  = criticos;
-        badge.style.background = 'rgba(239,68,68,0.2)';
-        badge.style.color  = 'var(--color-danger)';
-        badge.classList.add('pulse');
-      } else {
-        alertBox.className = 'critical-alert-box success-active';
-        document.getElementById('criticalIcon').className        = 'ti ti-circle-check';
-        document.getElementById('criticalIcon').style.color      = 'var(--color-success)';
-        document.getElementById('criticalStatusText').textContent = 'Sin conductas de riesgo';
-        const badge = document.getElementById('criticalCounterBadge');
-        badge.textContent  = 0;
-        badge.style.background = 'rgba(16,185,129,0.2)';
-        badge.style.color  = 'var(--color-success)';
-        badge.classList.remove('pulse');
-      }
+      // 3. ALERTAS CRÍTICAS INDIVIDUALES
+      let alertaInd = filtrado.some(r => 
+        String(r["Error Crítico: Falta de Respeto"]).toUpperCase() === "SI" || 
+        String(r["Error Crítico: Venta Fraudulenta"]).toUpperCase() === "SI"
+      );
+      document.getElementById('individualCriticalAlert').style.display = alertaInd ? 'flex' : 'none';
 
-      // Historial cualitativo (últimas 5)
+      // 4. LISTAS CUALITATIVAS (Últimas 5 auditorías)
       const ultimas = filtrado.slice(-5).reverse();
-      const empty   = '<p class="empty-state">Sin registros.</p>';
 
-      document.getElementById('lista-fortalezas').innerHTML = ultimas
-        .map(r => r[FIELDS.fortalezas] && r[FIELDS.fortalezas] !== '—'
-          ? `<div class="text-list-item"><strong>Auditoría ${r[FIELDS.fecha]}</strong>${r[FIELDS.fortalezas]}</div>`
-          : ''
-        ).join('') || empty;
+      document.getElementById('lista-fortalezas').innerHTML = ultimas.map(r => {
+        let val = r["Fortalezas Identificadas"] || r["Fortalezas"] || "—";
+        return val !== "—" ? `<div class="text-list-item"><strong>Auditoría ${r.Fecha || ''}</strong>${val}</div>` : '';
+      }).join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin registros.</p>';
 
-      document.getElementById('lista-mejoras').innerHTML = ultimas
-        .map(r => r[FIELDS.mejoras] && r[FIELDS.mejoras] !== '—'
-          ? `<div class="text-list-item"><strong>Auditoría ${r[FIELDS.fecha]}</strong>${r[FIELDS.mejoras]}</div>`
-          : ''
-        ).join('') || empty;
+      document.getElementById('lista-mejoras').innerHTML = ultimas.map(r => {
+        let val = r["Áreas de Mejora Prioritarias"] || r["Áreas de Mejora"] || "—";
+        return val !== "—" ? `<div class="text-list-item"><strong>Auditoría ${r.Fecha || ''}</strong>${val}</div>` : '';
+      }).join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin registros.</p>';
 
-      document.getElementById('lista-compromisos').innerHTML = ultimas
-        .map(r => {
-          const items = [r[FIELDS.compromiso1], r[FIELDS.compromiso2], r[FIELDS.compromiso3]].filter(c => c && c !== '—');
-          if (!items.length) return '';
-          return `<div class="text-list-item"><strong>Acuerdos del ${r[FIELDS.fecha]}</strong>${items.map(i => `• ${i}`).join('<br>')}</div>`;
-        }).join('') || '<p class="empty-state">Sin compromisos anotados.</p>';
+      document.getElementById('lista-compromisos').innerHTML = ultimas.map(r => {
+        let c1 = r["Acción / Compromiso 1"] || r["Compromiso 1"] || "";
+        let c2 = r["Acción / Compromiso 2"] || r["Compromiso 2"] || "";
+        let c3 = r["Acción / Compromiso 3"] || r["Compromiso 3"] || "";
+        let items = [c1, c2, c3].filter(c => c && c !== '—');
+        if (items.length === 0) return '';
+        return `<div class="text-list-item"><strong>Acuerdos del ${r.Fecha || ''}</strong>${items.map(i => `• ${i}`).join('<br>')}</div>`;
+      }).join('') || '<p style="color:var(--text-muted); font-size:13px;">Sin compromisos anotados.</p>';
 
-      // Gráfico de evolución
-      const labels = filtrado.map(r => r[FIELDS.fecha]);
-      const scores = filtrado.map(r => parseFloat(r[FIELDS.notaFinal] || 0));
+      // 5. GRÁFICO HISTÓRICO INDIVIDUAL (LÍNEAS)
+      const labels = filtrado.map(r => r.Fecha || '');
+      const scores = filtrado.map(r => parseFloat(r["Nota Final"] || 0));
 
       if (chartEvolucionRef) chartEvolucionRef.destroy();
-      chartEvolucionRef = new Chart(document.getElementById('chartEvolucion').getContext('2d'), {
+      const ctxEvolucion = document.getElementById('chartEvolucion').getContext('2d');
+      chartEvolucionRef = new Chart(ctxEvolucion, {
         type: 'line',
         data: {
-          labels,
+          labels: labels,
           datasets: [{
             label: 'Calidad %',
             data: scores,
             borderColor: '#38bdf8',
-            backgroundColor: 'rgba(56,189,248,0.1)',
+            backgroundColor: 'rgba(56, 189, 248, 0.1)',
             fill: true,
-            tension: 0.2,
-            pointBackgroundColor: scores.map(s => colorPorPorcentaje(s)),
-            pointRadius: 5
+            tension: 0.2
           }]
         },
         options: {
@@ -831,40 +816,36 @@
             x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
             y: { min: 0, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
           },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => ` ${ctx.parsed.y}%`
-              }
-            }
-          }
+          plugins: { legend: { display: false } }
         }
       });
 
-      // Radar de competencias individual
-      const skillsAgg = {};
-      SKILLS.forEach(s => { skillsAgg[s] = { sum: 0, count: 0 }; });
-      filtrado.forEach(row => {
-        SKILLS.forEach(s => {
-          if (row[s] !== undefined && row[s] !== "") {
-            skillsAgg[s].sum   += parseFloat(row[s]);
-            skillsAgg[s].count += 1;
-          }
-        });
+      // 6. RADAR DE COMPETENCIAS (Cálculo dinámico por fila con fallback de nombres)
+      let habilidades = ["Apertura", "Indagación", "Argumentación", "Objeciones", "Cierre"];
+      let sumHabilidades = [0, 0, 0, 0, 0];
+
+      filtrado.forEach(r => {
+        // Buscamos propiedades mapeando variaciones comunes de nombres en las columnas
+        sumHabilidades[0] += parseFloat(r["Apertura y Empatía"] || r["Apertura"] || 0);
+        sumHabilidades[1] += parseFloat(r["Indagación y Detección de Necesidades"] || r["Indagación"] || 0);
+        sumHabilidades[2] += parseFloat(r["Argumentación Comercial y Propuesta de Valor"] || r["Argumentación"] || 0);
+        sumHabilidades[3] += parseFloat(r["Manejo de Objeciones y Rebatimiento"] || r["Objeciones"] || 0);
+        sumHabilidades[4] += parseFloat(r["Cierre de Venta y Siguientes Pasos"] || r["Cierre"] || 0);
       });
-      const radarValues = SKILLS.map(s => skillsAgg[s].count > 0 ? Math.round(skillsAgg[s].sum / skillsAgg[s].count) : 0);
+
+      let avgHabilidades = sumHabilidades.map(v => Math.round(v / filtrado.length));
 
       if (chartRadarRef) chartRadarRef.destroy();
-      chartRadarRef = new Chart(document.getElementById('chartIndividualRadar').getContext('2d'), {
+      const ctxRadar = document.getElementById('chartRadar').getContext('2d');
+      chartRadarRef = new Chart(ctxRadar, {
         type: 'radar',
         data: {
-          labels: SKILLS,
+          labels: habilidades,
           datasets: [{
-            label: name,
-            data: radarValues,
+            label: 'Rendimiento Promedio',
+            data: avgHabilidades,
+            backgroundColor: 'rgba(56, 189, 248, 0.2)',
             borderColor: '#38bdf8',
-            backgroundColor: 'rgba(56,189,248,0.15)',
             pointBackgroundColor: '#38bdf8',
             borderWidth: 2
           }]
@@ -874,11 +855,12 @@
           maintainAspectRatio: false,
           scales: {
             r: {
-              min: 0, max: 100,
               grid: { color: '#334155' },
               angleLines: { color: '#334155' },
               pointLabels: { color: '#94a3b8', font: { size: 11 } },
-              ticks: { color: '#334155', backdropColor: 'transparent' }
+              ticks: { display: false },
+              min: 0,
+              max: 100
             }
           },
           plugins: { legend: { display: false } }

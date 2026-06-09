@@ -322,8 +322,16 @@
     // ============================================================
     // CONFIGURACIÓN CENTRAL
     // ============================================================
+ <script>
+    // URL del Web App de Google Apps Script (¡PEGÁ TU ENLACE ACÁ!)
     const SCRIPT_READ_URL = "https://script.google.com/macros/s/AKfycbyLBxpMe3Odp4uw_6Ra4_tDI3eZfFlUnSjZsKEdppI_cV4wJUTgSN48jBg-R2N6CY_cRw/exec";
-
+    
+    // DEFINICIÓN DE VARIABLES GLOBALES
+    let rawData = [];
+    let chartCanalesRef = null;
+    let chartEvolucionRef = null;
+    let chartSkillsRef = null;
+    let chartRadarRef = null;
     // Nombres de columnas del sheet centralizados — cambiá acá si cambian los headers
     const FIELDS = {
       asesor:          "Asesor",
@@ -367,10 +375,10 @@
     // ============================================================
     // INIT
     // ============================================================
+// Cargar datos automáticamente al iniciar
     window.addEventListener('DOMContentLoaded', () => {
       cargarDatosDesdeSheet();
     });
-
     // ============================================================
     // CARGA DE DATOS
     // ============================================================
